@@ -1,3 +1,4 @@
+import 'dotenv/config'; // load api/.env into process.env before loadConfig reads it
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { loadConfig } from './config.js';

@@ -56,10 +56,11 @@ The monorepo uses npm workspaces (`shared`, `api`, `web`). Run from the repo roo
 - **Test by name:** append `-t "name substring"`
 - **Build everything:** `npm run build`
 - **Lint:** `npm run lint`
-- **Run the API (dev):** `npm run dev -w @racingshape/api` (needs `GITHUB_TOKEN` in env; see `.env.example`)
+- **Run the whole app (dev):** `npm run dev` — launches API (:8787) + web (:5173, proxies `/api`) together via `concurrently`. Open http://localhost:5173.
+- **Run just one side:** `npm run dev:api` / `npm run dev:web`.
 - **Build the API:** `npm run build -w @racingshape/api`
 
-> Frontend (`web`) dev/build scripts are added by plan 03.
+> **Setup:** the API needs a GitHub token with read access to the tracked repo. Copy `api/.env.example` → `api/.env` and set `GITHUB_TOKEN`; the API auto-loads it via `dotenv` on startup (no need to inline it). `api/.env` is gitignored.
 
 ### Source-of-truth design docs (decisions already approved)
 

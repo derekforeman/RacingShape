@@ -16,13 +16,14 @@
     "test": "vitest run",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
-    "dev": "npm run dev --workspaces --if-present",
+    "dev": "concurrently -n api,web -c blue,magenta \"npm:dev:api\" \"npm:dev:web\"",
     "dev:api": "npm run dev -w @racingshape/api",
     "dev:web": "npm run dev -w @racingshape/web"
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",
     "@types/node": "^22.7.0",
+    "concurrently": "^10.0.3",
     "eslint": "^9.13.0",
     "prettier": "^3.3.3",
     "typescript": "^5.6.0",
