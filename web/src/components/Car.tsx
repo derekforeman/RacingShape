@@ -30,7 +30,12 @@ export function Car({
   const [avatarBroken, setAvatarBroken] = useState(false);
   const color = colorFor(standing.login);
   const initials = initialsFor(standing.login);
-  const left = `${carPct(displayScore ?? standing.score, topScore)}%`;
+  const pct = carPct(displayScore ?? standing.score, topScore);
+  const left = `${pct}%`;
+  // Near the finish the avatar + name label would clip the checkered strip / panel edge,
+  // so flip them to the LEFT of the pod (name trails behind the car). Pod stays pinned at
+  // its true position, so the left-tween is unaffected.
+  const nearFinish = pct > 60;
   const podTip = standingTip(standing);
 
   // Optimistic reaction summary, re-synced whenever the server-supplied standing changes.
@@ -70,7 +75,14 @@ export function Car({
         <span className="mono text-[11px] font-bold text-white">{initials}</span>
       </div>
 
-      <div className="flex items-center gap-[7px]">
+      <div
+        data-testid="car-info"
+        className={
+          nearFinish
+            ? 'absolute right-full top-1/2 mr-[8px] flex -translate-y-1/2 flex-row-reverse items-center gap-[7px]'
+            : 'flex items-center gap-[7px]'
+        }
+      >
         {!avatarBroken ? (
           <img
             data-testid="car-avatar"
