@@ -1,0 +1,35 @@
+# OS
+.DS_Store
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+.vite/
+
+# SQLite database files
+*.sqlite
+*.sqlite3
+*.db
+
+# Environment / secrets (GitHub token lives here — never commit)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor
+.idea/
+.vscode/
+*.swp
+
+# Node / build (plan 01 additions)
+data/
+*.tsbuildinfo
