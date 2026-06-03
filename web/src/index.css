@@ -56,3 +56,54 @@ body {
 .mono {
   font-family: var(--font-mono);
 }
+
+/* Boost animations — ported from mockup-2-f1-broadcast.html .spark/.cheer (sp -> spark). */
+.spark {
+  position: absolute;
+  font-size: 14px;
+  pointer-events: none;
+  animation: spark 0.8s ease-out forwards;
+}
+@keyframes spark {
+  to {
+    opacity: 0;
+    transform: translate(var(--spark-x), var(--spark-y));
+  }
+}
+
+.cheer {
+  position: absolute;
+  top: -14px;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  color: var(--amber);
+  background: var(--panel2);
+  border: 1px solid var(--amber);
+  border-radius: 20px;
+  padding: 2px 9px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 5;
+  animation: cheer 1.4s cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+@keyframes cheer {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.8);
+  }
+  18% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  78% {
+    opacity: 1;
+    transform: translateY(-10px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-22px) scale(0.95);
+  }
+}
