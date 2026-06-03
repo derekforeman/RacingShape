@@ -1,5 +1,6 @@
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import { join } from 'node:path';
+import { timingSafeEqual } from 'node:crypto';
 import type Database from 'better-sqlite3';
 import type { AppConfig } from './config.js';
 import { raceRouter } from './routes/race.js';
@@ -12,10 +13,46 @@ export interface AppDeps {
   clock: () => Date;
 }
 
+/**
+ * Optional site-wide HTTP Basic Auth gate. Enabled only when SITE_PASSWORD is set
+ * (inert in local dev). Protects the whole single-origin app — static bundle and
+ * /api/* alike — behind one shared password (any username). `/api/health` is exempt
+ * so platform health checks keep working. Constant-time comparison avoids leaking
+ * the password length via timing.
+ */
+function passwordGate(password: string) {
+  const expected = Buffer.from(password, 'utf8');
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (req.path === '/api/health') {
+      next();
+      return;
+    }
+    const encoded = /^Basic (.+)$/.exec(req.headers.authorization ?? '')?.[1];
+    if (encoded) {
+      const decoded = Buffer.from(encoded, 'base64').toString('utf8');
+      const supplied = Buffer.from(decoded.slice(decoded.indexOf(':') + 1), 'utf8');
+      if (supplied.length === expected.length && timingSafeEqual(supplied, expected)) {
+        next();
+        return;
+      }
+    }
+    res.set('WWW-Authenticate', 'Basic realm="RacingShape", charset="UTF-8"');
+    res.status(401).json({ error: 'unauthorized' });
+  };
+}
+
 /** Build the Express app. No `listen` — callers (index.ts / tests) own the server. */
 export function createApp(deps: AppDeps): Express {
   const { db, config, clock } = deps;
   const app = express();
+
+  // Optional shared-password gate (set SITE_PASSWORD to enable). First middleware, so it
+  // covers the web bundle and every /api route; /api/health stays open for health checks.
+  const sitePassword = process.env.SITE_PASSWORD;
+  if (sitePassword) {
+    app.use(passwordGate(sitePassword));
+  }
+
   app.use(express.json());
 
   app.get('/api/health', (_req, res) => {
