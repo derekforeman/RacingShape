@@ -1,40 +1,37 @@
-# RacingShape — Fly.io app config.
-# One always-on machine + one volume. The in-process poller and NY-midnight reset
-# scheduler require the machine to NEVER auto-stop — do not enable auto_stop here.
+# fly.toml app configuration file generated for racingshape on 2026-06-03T02:51:56Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
-app = "racingshape"
-primary_region = "iad"   # us-east, closest to the America/New_York race-day clock
+app = 'racingshape'
+primary_region = 'iad'
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = 'Dockerfile'
 
 [env]
-  PORT = "8787"
-  DB_PATH = "/data/racingshape.db"   # on the mounted volume below
-  WEB_DIST = "/app/web/dist"         # API serves the static bundle from here
-  TZ = "America/New_York"            # belt-and-suspenders; date key still derived via Intl
-  NODE_ENV = "production"
-  # GITHUB_TOKEN is set with `fly secrets set` — never in this file.
+  DB_PATH = '/data/racingshape.db'
+  NODE_ENV = 'production'
+  PORT = '8787'
+  TZ = 'America/New_York'
+  WEB_DIST = '/app/web/dist'
+
+[[mounts]]
+  source = 'racingshape_data'
+  destination = '/data'
 
 [http_service]
   internal_port = 8787
   force_https = true
-  # CRITICAL: keep the machine running so the 60s poller + reset scheduler stay alive.
-  auto_stop_machines = false
+  auto_stop_machines = 'off'
   auto_start_machines = false
   min_machines_running = 1
 
   [http_service.concurrency]
-    type = "requests"
-    soft_limit = 150
+    type = 'requests'
     hard_limit = 200
-
-# SQLite persistence. The volume name must match `fly volumes create` (see DEPLOY.md).
-# A volume binds to a single machine — keep the app at exactly one machine.
-[[mounts]]
-  source = "racingshape_data"
-  destination = "/data"
+    soft_limit = 150
 
 [[vm]]
-  size = "shared-cpu-1x"
-  memory = "256mb"   # bump to 512mb if you see OOM kills in `fly logs`
+  size = 'shared-cpu-1x'
+  memory = '256mb'
