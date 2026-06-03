@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RacingShape — Minimal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0d10; --panel:#13161b; --panel2:#181c22; --ink:#f2f4f7; --muted:#9aa3b0;
+    --line:#23282f; --accent:#7c5cff; --accent2:#9d86ff; --soft:#7c5cff22;
+    --green:#34d399; --amber:#fbbf24; --pink:#f472b6;
+  }
+  [data-theme="light"]{
+    --bg:#f7f8fa; --panel:#ffffff; --panel2:#f3f5f8; --ink:#11161d; --muted:#69727f;
+    --line:#e7eaf0; --accent:#6d4aff; --accent2:#8b6cff; --soft:#6d4aff14;
+    --green:#059669; --amber:#d97706; --pink:#db2777;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);
+    min-height:100vh;padding:28px 22px;transition:.35s;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto}
+  .mono{font-family:'JetBrains Mono',monospace}
+
+  header{display:flex;align-items:center;gap:14px;margin-bottom:26px;flex-wrap:wrap}
+  .mark{width:40px;height:40px;border-radius:11px;background:var(--accent);display:grid;place-items:center;
+    font-size:20px;box-shadow:0 6px 18px var(--soft)}
+  h1{font-size:20px;font-weight:700;letter-spacing:-.5px}
+  .tag{font-size:13px;color:var(--muted);font-weight:450;margin-top:1px}
+  .spacer{flex:1}
+  .ctrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .chip{font-size:13px;font-weight:500;border:1px solid var(--line);background:var(--panel);
+    color:var(--ink);border-radius:9px;padding:8px 12px;cursor:pointer;display:flex;align-items:center;
+    gap:7px;transition:.18s}
+  .chip:hover{border-color:var(--accent);background:var(--panel2)}
+  .chip.live{color:var(--green)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px var(--soft);
+    animation:p 1.6s infinite}
+  @keyframes p{0%,100%{opacity:1}50%{opacity:.4}}
+  select.chip{appearance:none}
+
+  .grid{display:grid;grid-template-columns:1fr 280px;gap:18px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px}
+  .ch{display:flex;align-items:center;gap:9px;margin-bottom:18px}
+  .ch h2{font-size:14px;font-weight:600;letter-spacing:-.2px}
+  .ch .meta{margin-left:auto;font-size:12px;color:var(--muted)}
+
+  /* TRACK */
+  .lane{position:relative;height:48px;display:flex;align-items:center;margin:2px 0}
+  .lane+.lane{border-top:1px solid var(--line)}
+  .laneline{position:absolute;left:46px;right:8px;top:50%;height:1px;background:var(--line)}
+  .laneline::after{content:"";position:absolute;right:0;top:-7px;height:15px;width:2px;background:var(--accent);opacity:.35}
+  .car{position:absolute;left:46px;display:flex;align-items:center;gap:10px;
+    transition:left 1.1s cubic-bezier(.33,1,.34,1);z-index:2}
+  .av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:11px;
+    font-weight:700;color:#fff;flex-shrink:0}
+  .lead .av{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--amber)}
+  .dotcar{width:11px;height:11px;border-radius:50%;flex-shrink:0;
+    box-shadow:0 0 0 4px var(--soft)}
+  .meta-r{display:flex;align-items:center;gap:8px}
+  .nm{font-size:13px;font-weight:600;white-space:nowrap}
+  .crown{font-size:13px}
+  .pts{font-family:'JetBrains Mono';font-size:12px;color:var(--muted)}
+  .react{cursor:pointer;font-size:13px;opacity:.45;transition:.15s}
+  .react:hover{opacity:1;transform:scale(1.3)}
+  .rc{font-size:11px;color:var(--pink);font-weight:600}
+  .leaderlabel{position:absolute;left:46px;top:-20px;font-size:11px;color:var(--muted)}
+  .puff{position:absolute;font-size:13px;pointer-events:none;animation:pf .8s ease-out forwards}
+  @keyframes pf{to{opacity:0;transform:translate(var(--x),var(--y))}}
+  .yhint{font-size:12px;color:var(--muted);margin-top:14px;display:flex;gap:14px;flex-wrap:wrap}
+
+  /* CHART (line) */
+  svg{width:100%;height:160px;display:block;overflow:visible}
+  .axis{stroke:var(--line);stroke-width:1}
+  .gridline{stroke:var(--line);stroke-dasharray:3 4;opacity:.6}
+  .area{fill:url(#g1)}
+  .lineC{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+  .lineP{fill:none;stroke:var(--pink);stroke-width:2;stroke-dasharray:4 4}
+  .pt{fill:var(--panel);stroke:var(--accent);stroke-width:2;cursor:pointer;transition:.15s}
+  .pt:hover{r:6}
+  .xl{font-size:9px;fill:var(--muted);font-family:'JetBrains Mono'}
+  .clegend{display:flex;gap:18px;margin-top:14px;font-size:12px;color:var(--muted)}
+  .clegend span{display:flex;align-items:center;gap:7px}
+  .sw{width:14px;height:3px;border-radius:2px}
+
+  /* STATS */
+  .stat{padding:16px 0;border-bottom:1px solid var(--line)}
+  .stat:first-child{padding-top:0}.stat:last-child{border:none;padding-bottom:0}
+  .k{font-size:12px;color:var(--muted);font-weight:500;display:flex;align-items:center;gap:7px}
+  .v{font-size:28px;font-weight:700;letter-spacing:-1px;margin-top:6px;display:flex;align-items:baseline;gap:8px}
+  .delta{font-size:12px;font-weight:600;color:var(--green)}
+  .track-bar{height:6px;border-radius:3px;background:var(--panel2);margin-top:10px;overflow:hidden}
+  .track-bar i{display:block;height:100%;background:var(--accent);border-radius:3px;transition:width 1s}
+  .streakdots{display:flex;gap:4px;margin-top:10px}
+  .sd{width:11px;height:11px;border-radius:3px;background:var(--accent)}
+  .sd.off{background:var(--line)}
+
+  /* RECAP */
+  .recap{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px}
+  .rgrid{display:grid;grid-template-columns:1.1fr 1.4fr;gap:24px;align-items:center}
+  @media(max-width:760px){.rgrid{grid-template-columns:1fr}}
+  .podium{display:flex;align-items:flex-end;gap:12px;justify-content:center}
+  .step{text-align:center}
+  .pil{width:62px;border-radius:9px 9px 0 0;background:var(--panel2);border:1px solid var(--line);
+    display:flex;align-items:flex-start;justify-content:center;padding-top:8px;font-size:18px}
+  .p1 .pil{height:86px;background:var(--soft);border-color:var(--accent)}
+  .p2 .pil{height:64px}.p3 .pil{height:48px}
+  .pn{font-size:12px;font-weight:600;margin-top:6px}.pp{font-size:11px;color:var(--muted);font-family:'JetBrains Mono'}
+  .super{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .super:last-child{border:none}
+  .si{width:34px;height:34px;border-radius:9px;background:var(--panel2);display:grid;place-items:center;font-size:16px}
+  .st{font-size:13px;font-weight:600}.sd2{font-size:12px;color:var(--muted)}
+  .cosrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+  .cos{font-size:12px;font-weight:500;border:1px solid var(--line);border-radius:20px;padding:6px 12px;
+    display:flex;align-items:center;gap:6px;background:var(--panel2)}
+  footer{text-align:center;color:var(--muted);font-size:12px;margin-top:24px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="mark">🏎️</div>
+    <div><h1>RacingShape</h1><div class="tag">Ship code. Race cars. Win the day.</div></div>
+    <div class="spacer"></div>
+    <div class="ctrl">
+      <div class="chip live"><span class="dot"></span>Live · today</div>
+      <select class="chip"><option>Jun 2</option><option>Jun 1</option><option>May 31</option></select>
+      <div class="chip">▶ Replay</div>
+      <div class="chip" id="tbtn" onclick="toggleTheme()">🌙</div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <div class="ch"><span style="font-size:15px">🏁</span><h2>Today's race</h2>
+          <span class="meta">updates every 60s</span></div>
+        <div style="position:relative;padding-top:8px" id="track"></div>
+        <div class="yhint">
+          <span>Position = weighted activity score · auto-scaled</span>
+          <span style="margin-left:auto">Click ✨ to cheer a teammate</span>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px">
+        <div class="ch"><span style="font-size:15px">📈</span><h2>Activity · last 14 days</h2>
+          <span class="meta">→ opens s2shape on GitHub</span></div>
+        <svg viewBox="0 0 560 160" id="chart"></svg>
+        <div class="clegend">
+          <span><i class="sw" style="background:var(--accent)"></i>Commits</span>
+          <span><i class="sw" style="background:var(--pink)"></i>PRs opened</span>
+        </div>
+      </div>
+    </div>
+
+    <aside class="card">
+      <div class="ch"><span style="font-size:15px">✦</span><h2>This week</h2></div>
+      <div class="stat"><div class="k">🗂️ Tasks touched</div>
+        <div class="v">37 <span class="delta">+9</span></div></div>
+      <div class="stat"><div class="k">✅ Completion rate</div>
+        <div class="v">82%</div><div class="track-bar"><i style="width:82%"></i></div></div>
+      <div class="stat"><div class="k">🔥 Team streak</div>
+        <div class="v">12 <span style="font-size:13px;color:var(--muted);font-weight:500">days</span></div>
+        <div class="streakdots" id="streak"></div></div>
+    </aside>
+  </div>
+
+  <div class="recap">
+    <div class="ch"><span style="font-size:15px">🏆</span><h2>Grand Prix recap · Jun 1</h2>
+      <span class="meta">auto-generated at midnight</span></div>
+    <div class="rgrid">
+      <div class="podium">
+        <div class="step p2"><div class="pil">🥈</div><div class="pn">mira-k</div><div class="pp">31</div></div>
+        <div class="step p1"><div class="pil">👑</div><div class="pn">devon-r</div><div class="pp">44</div></div>
+        <div class="step p3"><div class="pil">🥉</div><div class="pn">sasha-p</div><div class="pp">27</div></div>
+      </div>
+      <div>
+        <div class="super"><div class="si">⚡</div><div><div class="st">Most commits in an hour</div>
+          <div class="sd2">devon-r · 9 between 2–3pm</div></div></div>
+        <div class="super"><div class="si">📈</div><div><div class="st">Comeback of the day</div>
+          <div class="sd2">mira-k · +22 points after 6pm</div></div></div>
+        <div class="super"><div class="si">🌙</div><div><div class="st">Midnight grinder</div>
+          <div class="sd2">l-stone · last commit 11:54pm</div></div></div>
+      </div>
+    </div>
+    <div class="cosrow">
+      <div class="cos">🔥 Flame trail <span style="color:var(--muted)">streak ≥5</span></div>
+      <div class="cos">🏅 Gold rims <span style="color:var(--muted)">first merge</span></div>
+      <div class="cos">🌟 Rookie decal <span style="color:var(--muted)">most improved</span></div>
+    </div>
+  </div>
+
+  <footer>Morale, not surveillance. Resets at midnight EDT.</footer>
+</div>
+
+<script>
+const racers=[
+ {u:'devon-r',i:'DR',c:'#7c5cff',s:44,lead:true,r:7},
+ {u:'mira-k', i:'MK',c:'#34d399',s:38,r:4},
+ {u:'sasha-p',i:'SP',c:'#f472b6',s:31,r:2},
+ {u:'l-stone',i:'LS',c:'#fbbf24',s:24,r:5},
+ {u:'octocat',i:'OC',c:'#38bdf8',s:12,r:1},
+];
+const max=Math.max(...racers.map(r=>r.s));
+const track=document.getElementById('track');
+racers.forEach(r=>{
+  const pct=(r.s/max)*100;
+  const lane=document.createElement('div');lane.className='lane';
+  lane.innerHTML=`<div class="laneline"></div>
+   <div class="av" style="background:${r.c};position:absolute;left:0">${r.i}</div>
+   <div class="car ${r.lead?'lead':''}" style="left:calc(46px + (100% - 90px) * ${pct/100})">
+     <div class="dotcar" style="background:${r.c}"></div>
+     <div class="meta-r">
+       ${r.lead?'<span class="crown">👑</span>':''}
+       <span class="nm">${r.u}</span>
+       <span class="pts">${r.s}</span>
+       <span class="rc">${r.r}</span>
+       <span class="react" onclick="cheer(this)">✨</span>
+     </div>
+   </div>`;
+  track.appendChild(lane);
+});
+function cheer(el){
+  const lane=el.closest('.lane');const car=lane.querySelector('.car');
+  for(let k=0;k<5;k++){const p=document.createElement('div');p.className='puff';
+    p.textContent=['✨','🔥','⚡'][k%3];p.style.left=car.style.left;p.style.top='8px';
+    p.style.setProperty('--x',(Math.random()*44-22)+'px');p.style.setProperty('--y',(-Math.random()*36-8)+'px');
+    lane.appendChild(p);setTimeout(()=>p.remove(),800);}
+  const rc=el.previousElementSibling;rc.textContent=parseInt(rc.textContent)+1;
+}
+// streak dots
+const sd=document.getElementById('streak');
+for(let i=0;i<14;i++){const d=document.createElement('div');d.className='sd'+(i<12?'':' off');sd.appendChild(d);}
+// line chart
+const commits=[5,8,3,11,6,9,4,12,7,10,6,14,8,13];
+const prs=[1,2,0,3,1,2,1,4,2,3,1,5,2,4];
+const days=['T','W','T','F','S','S','M','T','W','T','F','S','S','M'];
+const W=560,H=160,PAD=14,mx=Math.max(...commits);
+const X=i=>PAD+ i*((W-2*PAD)/(commits.length-1));
+const Y=v=>H-20-(v/mx)*(H-34);
+const svg=document.getElementById('chart');
+let g='';
+[0,.5,1].forEach(t=>{const y=Y(mx*t);g+=`<line class="gridline" x1="${PAD}" y1="${y}" x2="${W-PAD}" y2="${y}"/>`;});
+const ptsC=commits.map((v,i)=>`${X(i)},${Y(v)}`).join(' ');
+const ptsP=prs.map((v,i)=>`${X(i)},${Y(v)}`).join(' ');
+const area=`${PAD},${H-20} ${ptsC} ${W-PAD},${H-20}`;
+g+=`<defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+   <stop offset="0" stop-color="var(--accent)" stop-opacity=".28"/>
+   <stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>`;
+g+=`<polygon class="area" points="${area}"/>`;
+g+=`<polyline class="lineP" points="${ptsP}"/>`;
+g+=`<polyline class="lineC" points="${ptsC}"/>`;
+commits.forEach((v,i)=>{g+=`<circle class="pt" cx="${X(i)}" cy="${Y(v)}" r="3.5"><title>${v} commits</title></circle>`;});
+days.forEach((d,i)=>{g+=`<text class="xl" x="${X(i)}" y="${H-6}" text-anchor="middle">${d}</text>`;});
+svg.innerHTML=g;
+function toggleTheme(){const h=document.documentElement;const d=h.getAttribute('data-theme')==='dark';
+  h.setAttribute('data-theme',d?'light':'dark');
+  document.getElementById('tbtn').textContent=d?'☀️':'🌙';}
+</script>
+</body>
+</html>

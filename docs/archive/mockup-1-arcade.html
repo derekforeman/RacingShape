@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RacingShape — Arcade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Russo+One&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0118; --bg2:#15042b; --panel:#1b0a36; --panel2:#240d47;
+    --ink:#fff; --muted:#b39ddb; --line:#3a1d6e;
+    --neon:#00f5d4; --neon2:#ff2d95; --gold:#ffd60a; --purple:#9b5de5; --blue:#4cc9f0;
+    --track:#120526; --lane:#1c0a3a;
+    --shadow:0 0 0 rgba(0,0,0,0);
+  }
+  [data-theme="light"]{
+    --bg:#fef6ff; --bg2:#ffe9fb; --panel:#ffffff; --panel2:#fff0fb;
+    --ink:#21043f; --muted:#7a4fb0; --line:#ffc2ee;
+    --neon:#00b894; --neon2:#ff2d95; --gold:#f0a500; --purple:#7b2ff7; --blue:#1592e6;
+    --track:#fbe6ff; --lane:#fff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Outfit',system-ui,sans-serif;
+    background:
+      radial-gradient(circle at 15% 0%, var(--bg2), transparent 45%),
+      radial-gradient(circle at 85% 100%, var(--bg2), transparent 45%),
+      var(--bg);
+    color:var(--ink); min-height:100vh; padding:18px;
+    transition:background .4s, color .4s;
+    background-attachment:fixed;
+  }
+  .wrap{max-width:1280px;margin:0 auto}
+
+  /* HEADER */
+  header{
+    display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+    background:linear-gradient(90deg,var(--panel),var(--panel2));
+    border:3px solid var(--line); border-radius:18px; padding:16px 20px;
+    box-shadow:0 8px 0 rgba(0,0,0,.25);
+  }
+  .logo{display:flex;align-items:center;gap:14px}
+  .badge{
+    width:52px;height:52px;border-radius:12px;display:grid;place-items:center;
+    background:conic-gradient(from 45deg,var(--neon),var(--neon2),var(--gold),var(--neon));
+    font-size:26px;box-shadow:0 0 22px var(--neon2);animation:spin 6s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .title h1{font-family:'Press Start 2P',monospace;font-size:18px;letter-spacing:1px;
+    background:linear-gradient(90deg,var(--neon),var(--blue),var(--neon2));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .title p{font-size:12px;color:var(--muted);font-weight:600;margin-top:6px;letter-spacing:.5px}
+  .spacer{flex:1}
+  .ctrl{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .chip{
+    font-family:'Russo One',sans-serif;font-size:13px;border:2px solid var(--line);
+    background:var(--panel2);color:var(--ink);border-radius:10px;padding:9px 13px;
+    cursor:pointer;display:flex;align-items:center;gap:7px;transition:.2s}
+  .chip:hover{border-color:var(--neon);box-shadow:0 0 14px var(--neon);transform:translateY(-2px)}
+  .chip.live{background:var(--neon2);color:#fff;border-color:var(--neon2)}
+  .live .dot{width:9px;height:9px;border-radius:50%;background:#fff;animation:blink 1s steps(2) infinite}
+  @keyframes blink{50%{opacity:.25}}
+  select.chip{appearance:none}
+
+  /* LAYOUT */
+  .grid{display:grid;grid-template-columns:1fr 300px;gap:18px;margin-top:18px}
+  @media(max-width:920px){.grid{grid-template-columns:1fr}}
+  .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:3px solid var(--line);border-radius:18px;padding:18px;
+    box-shadow:0 8px 0 rgba(0,0,0,.22)}
+  .panel h2{font-family:'Russo One',sans-serif;font-size:15px;letter-spacing:.5px;
+    display:flex;align-items:center;gap:9px;margin-bottom:14px}
+  .tag{font-family:'Press Start 2P';font-size:8px;color:var(--bg);background:var(--gold);
+    padding:5px 7px;border-radius:6px}
+
+  /* TRACK */
+  .track{background:var(--track);border-radius:14px;padding:16px 14px 8px;position:relative;overflow:hidden;
+    border:2px dashed var(--line)}
+  .finish{position:absolute;top:0;right:46px;bottom:0;width:18px;
+    background:repeating-conic-gradient(#fff 0 25%,#000 0 50%) 0 0/9px 9px;opacity:.7;border-radius:3px}
+  .flag{position:absolute;top:-2px;right:38px;font-size:20px;z-index:3}
+  .lane{position:relative;height:54px;margin:8px 0;border-radius:10px;
+    background:linear-gradient(90deg,var(--lane),transparent);
+    border-bottom:2px dotted var(--line);display:flex;align-items:center}
+  .lane::before{content:"";position:absolute;left:0;right:34px;top:50%;height:3px;
+    background:repeating-linear-gradient(90deg,var(--line) 0 14px,transparent 14px 28px);opacity:.5}
+  .car{position:absolute;left:0;display:flex;align-items:center;gap:9px;
+    transition:left 1.1s cubic-bezier(.34,1.4,.5,1);will-change:left;z-index:2}
+  .av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
+    font-family:'Russo One';font-size:14px;color:#fff;border:3px solid var(--neon);
+    box-shadow:0 0 14px var(--neon)}
+  .carbody{font-size:30px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5));transform:scaleX(-1)}
+  .name{font-family:'Russo One';font-size:12px;white-space:nowrap;
+    background:var(--panel);padding:3px 8px;border-radius:7px;border:2px solid var(--line)}
+  .score{font-family:'Press Start 2P';font-size:9px;color:var(--gold)}
+  .leader .av{border-color:var(--gold);box-shadow:0 0 18px var(--gold)}
+  .crown{position:absolute;top:-12px;left:9px;font-size:18px;animation:bob 1.4s ease-in-out infinite}
+  @keyframes bob{50%{transform:translateY(-4px)}}
+  /* flame trail cosmetic */
+  .flame .carbody::after{}
+  .trail{position:absolute;right:100%;top:50%;transform:translateY(-50%);font-size:20px;
+    opacity:.85;animation:flick .4s steps(2) infinite}
+  @keyframes flick{50%{opacity:.4;transform:translateY(-50%) scale(.85)}}
+  .reactbtn{cursor:pointer;font-size:15px;opacity:.5;transition:.15s;margin-left:4px}
+  .reactbtn:hover{opacity:1;transform:scale(1.4)}
+  .rcount{font-size:11px;color:var(--neon2);font-weight:800}
+  .burst{position:absolute;font-size:18px;pointer-events:none;animation:burst .9s ease-out forwards}
+  @keyframes burst{0%{opacity:1;transform:translate(0,0) scale(.6)}
+    100%{opacity:0;transform:translate(var(--bx),var(--by)) scale(1.5)}}
+
+  /* CHART */
+  .bars{display:flex;align-items:flex-end;gap:6px;height:150px;padding-top:8px}
+  .barcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;height:100%;justify-content:flex-end}
+  .bar{width:100%;border-radius:6px 6px 0 0;background:linear-gradient(180deg,var(--neon),var(--blue));
+    position:relative;transition:height .8s cubic-bezier(.34,1.4,.5,1);min-height:4px;cursor:pointer}
+  .bar:hover{filter:brightness(1.25)}
+  .bar.pr{background:linear-gradient(180deg,var(--neon2),var(--purple))}
+  .blabel{font-size:9px;color:var(--muted);font-weight:700}
+  .legend{display:flex;gap:14px;margin-top:12px;font-size:11px;color:var(--muted);flex-wrap:wrap}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .sw{width:12px;height:12px;border-radius:3px}
+
+  /* SIDEBAR STATS */
+  .stat{background:var(--panel2);border:2px solid var(--line);border-radius:13px;
+    padding:14px;margin-bottom:12px;position:relative;overflow:hidden}
+  .stat .k{font-size:12px;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:6px}
+  .stat .v{font-family:'Russo One';font-size:30px;margin-top:4px}
+  .stat .sub{font-size:11px;color:var(--neon);font-weight:700;margin-top:2px}
+  .streak .v{color:var(--gold)}
+  .ring{position:absolute;right:-18px;top:-18px;width:70px;height:70px;border-radius:50%;
+    border:7px solid var(--neon);opacity:.18}
+
+  /* RECAP CARD */
+  .recap{margin-top:18px;background:
+    linear-gradient(135deg,var(--neon2),var(--purple));
+    border-radius:18px;padding:3px;box-shadow:0 0 28px rgba(255,45,149,.4)}
+  .recap-in{background:var(--panel);border-radius:15px;padding:18px}
+  .recap h2{color:var(--gold)}
+  .podium{display:flex;align-items:flex-end;gap:10px;justify-content:center;margin:14px 0}
+  .step{flex:1;text-align:center}
+  .pillar{border-radius:10px 10px 0 0;background:linear-gradient(180deg,var(--purple),var(--panel2));
+    display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:8px;
+    border:2px solid var(--line);font-family:'Press Start 2P';font-size:11px}
+  .p1 .pillar{height:96px;background:linear-gradient(180deg,var(--gold),#b8860b)}
+  .p2 .pillar{height:70px}
+  .p3 .pillar{height:52px}
+  .supers{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .super{flex:1 1 30%;background:var(--panel2);border:2px solid var(--line);border-radius:10px;padding:9px}
+  .super .t{font-size:10px;color:var(--gold);font-weight:800;text-transform:uppercase;letter-spacing:.5px}
+  .super .n{font-family:'Russo One';font-size:13px;margin-top:3px}
+  .cos{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .cosmetic{font-size:11px;font-weight:700;background:var(--panel2);border:2px solid var(--line);
+    border-radius:20px;padding:6px 11px;display:flex;align-items:center;gap:6px}
+  footer{text-align:center;color:var(--muted);font-size:11px;margin:22px 0 6px;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">
+      <div class="badge">🏎️</div>
+      <div class="title">
+        <h1>RACINGSHAPE</h1>
+        <p>SHIP CODE · RACE CARS · WIN THE DAY</p>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <div class="ctrl">
+      <div class="chip live"><span class="dot"></span>LIVE · TODAY</div>
+      <select class="chip" onchange="">
+        <option>Mon Jun 2</option><option>Sun Jun 1</option><option>Sat May 31</option>
+      </select>
+      <div class="chip" onclick="">▶ REPLAY</div>
+      <div class="chip" onclick="toggleTheme()" id="tbtn">🌙 DARK</div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div>
+      <div class="panel">
+        <h2>🏁 TODAY'S GRAND PRIX <span class="tag">LIVE</span></h2>
+        <div class="track" id="track">
+          <div class="finish"></div><div class="flag">🏁</div>
+          <!-- lanes injected -->
+        </div>
+        <p style="font-size:11px;color:var(--muted);margin-top:10px;font-weight:600">
+          Tap a car to drop a 🔥 boost — cosmetic hype only, never changes the score.</p>
+      </div>
+
+      <div class="panel" style="margin-top:18px">
+        <h2>📊 ACTIVITY · LAST 14 DAYS</h2>
+        <div class="bars" id="bars"></div>
+        <div class="legend">
+          <span><i class="sw" style="background:linear-gradient(180deg,var(--neon),var(--blue))"></i>Commits</span>
+          <span><i class="sw" style="background:linear-gradient(180deg,var(--neon2),var(--purple))"></i>PRs opened</span>
+          <span style="margin-left:auto;color:var(--neon)">↗ Click a bar → GitHub</span>
+        </div>
+      </div>
+    </div>
+
+    <aside>
+      <div class="panel">
+        <h2>⚡ TEAM STATS</h2>
+        <div class="stat"><div class="ring"></div>
+          <div class="k">🗂️ Total tasks touched</div><div class="v">37</div>
+          <div class="sub">+9 vs last week</div></div>
+        <div class="stat"><div class="ring" style="border-color:var(--neon2)"></div>
+          <div class="k">✅ Completion rate</div><div class="v">82%</div>
+          <div class="sub">closed ÷ opened · 14d</div></div>
+        <div class="stat streak"><div class="ring" style="border-color:var(--gold)"></div>
+          <div class="k">🔥 Team streak</div><div class="v">12 days</div>
+          <div class="sub">don't break the chain!</div></div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- RECAP -->
+  <div class="recap">
+    <div class="recap-in">
+      <h2>🏆 DAILY GRAND PRIX RECAP — Jun 1</h2>
+      <div class="podium">
+        <div class="step p2"><div class="pillar"><div style="font-size:22px">🥈</div></div>
+          <div style="font-size:11px;margin-top:6px;font-weight:800">mira-k</div><div class="score">31 pts</div></div>
+        <div class="step p1"><div class="pillar"><div style="font-size:26px">👑</div></div>
+          <div style="font-size:12px;margin-top:6px;font-weight:800">devon-r</div><div class="score">44 pts</div></div>
+        <div class="step p3"><div class="pillar"><div style="font-size:20px">🥉</div></div>
+          <div style="font-size:11px;margin-top:6px;font-weight:800">sasha-p</div><div class="score">27 pts</div></div>
+      </div>
+      <div class="supers">
+        <div class="super"><div class="t">⚡ Most commits / hour</div><div class="n">devon-r · 9</div></div>
+        <div class="super"><div class="t">📈 Comeback of the day</div><div class="n">mira-k</div></div>
+        <div class="super"><div class="t">🌙 Midnight grinder</div><div class="n">l-stone · 11:54pm</div></div>
+      </div>
+      <div class="cos">
+        <div class="cosmetic">🔥 Flame trail · streak ≥5</div>
+        <div class="cosmetic">🏅 Gold rims · first merge</div>
+        <div class="cosmetic">🌟 Rookie decal · most improved</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>RacingShape · morale not surveillance · resets at midnight EDT</footer>
+</div>
+
+<script>
+const racers=[
+  {u:'devon-r',i:'DR',c:'#ff2d95',score:44,lead:true,react:7,cos:['🏅'],trail:false},
+  {u:'mira-k', i:'MK',c:'#00f5d4',score:38,react:4,cos:['🔥'],trail:true},
+  {u:'sasha-p',i:'SP',c:'#9b5de5',score:31,react:2,cos:[]},
+  {u:'l-stone',i:'LS',c:'#4cc9f0',score:24,react:5,cos:['🌟']},
+  {u:'octocat',i:'OC',c:'#ffd60a',score:12,react:1,cos:[]},
+];
+const max=Math.max(...racers.map(r=>r.score));
+const track=document.getElementById('track');
+racers.forEach(r=>{
+  const pct=8+(r.score/max)*78;
+  const lane=document.createElement('div');lane.className='lane';
+  lane.innerHTML=`
+    <div class="car ${r.lead?'leader':''}" style="left:${pct}%">
+      ${r.lead?'<div class="crown">👑</div>':''}
+      ${r.trail?'<div class="trail">🔥</div>':''}
+      <div class="av" style="border-color:${r.c};box-shadow:0 0 14px ${r.c};background:${r.c}33">${r.i}</div>
+      <div class="carbody">🏎️</div>
+      <div>
+        <div class="name">${r.u} ${r.cos.join('')}</div>
+        <div class="score">${r.score} PTS · <span class="rcount">${r.react}🔥</span>
+          <span class="reactbtn" onclick="boost(this,event)">🔥</span></div>
+      </div>
+    </div>`;
+  track.appendChild(lane);
+});
+function boost(el,e){
+  const lane=el.closest('.lane');const rect=lane.getBoundingClientRect();
+  for(let k=0;k<6;k++){const b=document.createElement('div');b.className='burst';b.textContent=['🔥','⚡','💨'][k%3];
+    b.style.left=(el.offsetLeft)+'px';b.style.top='10px';
+    b.style.setProperty('--bx',(Math.random()*60-30)+'px');
+    b.style.setProperty('--by',(-Math.random()*50-10)+'px');
+    lane.appendChild(b);setTimeout(()=>b.remove(),900);}
+  const c=el.previousElementSibling;c.textContent=(parseInt(c.textContent)+1)+'🔥';
+}
+// chart
+const data=[
+ [5,1],[8,2],[3,0],[11,3],[6,1],[9,2],[4,1],[12,4],[7,2],[10,3],[6,1],[14,5],[8,2],[13,4]];
+const mx=Math.max(...data.flat());const bars=document.getElementById('bars');
+const days=['T','W','T','F','S','S','M','T','W','T','F','S','S','M'];
+data.forEach((d,n)=>{
+  const col=document.createElement('div');col.className='barcol';
+  col.innerHTML=`<div style="display:flex;gap:2px;align-items:flex-end;height:100%;width:100%">
+     <div class="bar" style="height:${d[0]/mx*100}%" title="${d[0]} commits"></div>
+     <div class="bar pr" style="height:${d[1]/mx*100}%" title="${d[1]} PRs"></div>
+   </div><div class="blabel">${days[n]}</div>`;
+  bars.appendChild(col);
+});
+function toggleTheme(){
+  const h=document.documentElement;const d=h.getAttribute('data-theme')==='dark';
+  h.setAttribute('data-theme',d?'light':'dark');
+  document.getElementById('tbtn').textContent=d?'☀️ LIGHT':'🌙 DARK';
+}
+</script>
+</body>
+</html>
