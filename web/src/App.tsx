@@ -2,22 +2,48 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { TooltipProvider } from './lib/tooltip';
 import { usePolling } from './lib/usePolling';
 import { getRaceToday, getStats, getRaces, getArchive } from './lib/api';
-import type { RaceArchive, RaceListItem, RaceToday, RacerStanding, StatsResponse, Cosmetic } from './lib/types';
+import type {
+  RaceArchive,
+  RaceListItem,
+  RaceToday,
+  RacerStanding,
+  StatsResponse,
+  Cosmetic,
+  Recap as RecapData,
+  ScoreBreakdown,
+} from './lib/types';
 import { Header } from './components/Header';
 import { RaceControl } from './components/RaceControl';
 import { TelemetryChart } from './components/TelemetryChart';
 import { PitWall } from './components/PitWall';
 import { Recap } from './components/Recap';
+import { GrandPrixReveal } from './components/GrandPrixReveal';
 import { useReplay } from './replay/useReplay';
 import { exportNodeToPng } from './lib/exportPng';
 
 const POLL_MS = 60_000;
 const REACTOR = 'you'; // free-text handle for v1 (PRD §5.7)
+const REVEAL_SEEN_KEY = 'racingshape-recap-seen';
+
+interface RevealState {
+  date: string;
+  recap: RecapData;
+  teamTotal: number;
+  teamBreakdown: ScoreBreakdown;
+}
 
 export default function App() {
   const [selectedDate, setSelectedDate] = useState<string>('today');
   const [races, setRaces] = useState<RaceListItem[]>([]);
   const [archive, setArchive] = useState<RaceArchive | null>(null);
+  const [seenRecap, setSeenRecap] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(REVEAL_SEEN_KEY);
+    } catch {
+      return null;
+    }
+  });
+  const [reveal, setReveal] = useState<RevealState | null>(null);
   const isLive = selectedDate === 'today';
 
   // available archived days
@@ -69,6 +95,59 @@ export default function App() {
   }, [selectedDate]);
   const replayLink = `${window.location.origin}/race/${selectedDate}`;
 
+  // One-time celebratory reveal when a newly-completed day is available (the most recent
+  // archived date the viewer hasn't seen yet). Shown only on the live view.
+  useEffect(() => {
+    const latest = races[0]?.raceDate;
+    if (!latest || latest === seenRecap) {
+      setReveal(null);
+      return;
+    }
+    let cancelled = false;
+    void getArchive(latest)
+      .then((a) => {
+        if (cancelled || a.recap.podium.length === 0) return;
+        const teamTotal = a.standings.reduce((n, s) => n + s.score, 0);
+        const teamBreakdown = a.standings.reduce<ScoreBreakdown>(
+          (acc, s) => ({
+            commit: acc.commit + s.breakdown.commit,
+            pr_opened: acc.pr_opened + s.breakdown.pr_opened,
+            pr_merged: acc.pr_merged + s.breakdown.pr_merged,
+            issue_closed: acc.issue_closed + s.breakdown.issue_closed,
+          }),
+          { commit: 0, pr_opened: 0, pr_merged: 0, issue_closed: 0 },
+        );
+        setReveal({ date: latest, recap: a.recap, teamTotal, teamBreakdown });
+      })
+      .catch(() => {
+        /* reveal is non-critical; ignore fetch errors */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [races, seenRecap]);
+
+  const markRecapSeen = useCallback((date: string) => {
+    try {
+      localStorage.setItem(REVEAL_SEEN_KEY, date);
+    } catch {
+      /* ignore storage errors */
+    }
+    setSeenRecap(date);
+    setReveal(null);
+  }, []);
+
+  const dismissReveal = useCallback(() => {
+    if (reveal) markRecapSeen(reveal.date);
+  }, [reveal, markRecapSeen]);
+
+  const viewRevealResults = useCallback(() => {
+    if (reveal) {
+      setSelectedDate(reveal.date);
+      markRecapSeen(reveal.date);
+    }
+  }, [reveal, markRecapSeen]);
+
   return (
     <TooltipProvider>
       <div className="mx-auto max-w-[1320px]">
@@ -108,6 +187,16 @@ export default function App() {
           </div>
           {stats.data && <PitWall stats={stats.data} />}
         </div>
+
+        {isLive && reveal && (
+          <GrandPrixReveal
+            recap={reveal.recap}
+            teamTotal={reveal.teamTotal}
+            teamBreakdown={reveal.teamBreakdown}
+            onDismiss={dismissReveal}
+            onViewResults={viewRevealResults}
+          />
+        )}
       </div>
     </TooltipProvider>
   );

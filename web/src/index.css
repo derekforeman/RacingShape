@@ -107,3 +107,51 @@ body {
     transform: translateY(-22px) scale(0.95);
   }
 }
+
+/* Grand Prix reveal — the midnight finish-line celebration (tasteful, auto-expiring). */
+.gp-pop {
+  animation: gp-pop 0.35s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+@keyframes gp-pop {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.gp-flag {
+  display: inline-block;
+  transform-origin: 70% 70%;
+  animation: gp-flag 1.1s ease-in-out infinite;
+}
+@keyframes gp-flag {
+  0%,
+  100% {
+    transform: rotate(-9deg);
+  }
+  50% {
+    transform: rotate(9deg);
+  }
+}
+
+.gp-confetti {
+  position: absolute;
+  top: -12px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: gp-confetti 1.8s ease-in forwards;
+}
+@keyframes gp-confetti {
+  0% {
+    opacity: 1;
+    transform: translateY(-12px) rotate(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(360px) rotate(600deg);
+  }
+}

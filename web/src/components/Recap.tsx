@@ -1,8 +1,8 @@
 import type { Recap as RecapType, PodiumStep, Superlative, Cosmetic } from '../lib/types';
 import { breakdownBody } from '../lib/format';
 import { tip } from '../lib/tooltip';
+import { PodiumAvatar } from './PodiumAvatar';
 
-const MEDAL: Record<number, string> = { 1: '🏆', 2: '🥈', 3: '🥉' };
 const SUPER_EMOJI: Record<Superlative['key'], string> = {
   fastest_hour: '⚡',
   comeback: '📈',
@@ -99,10 +99,10 @@ export function Recap({ recap, cosmeticsByLogin, onExportPng, replayLink }: Reca
             <div
               data-testid={`podium-pil-${step.position}`}
               data-tip={podiumTip(step)}
-              className="flex w-[78px] cursor-help items-start justify-center rounded-[6px_6px_0_0] border border-line pt-[8px] text-[22px]"
+              className="flex w-[78px] cursor-help items-start justify-center rounded-[6px_6px_0_0] border border-line pt-[10px]"
               style={pilStyle(step.position)}
             >
-              {MEDAL[step.position]}
+              <PodiumAvatar login={step.login} avatarUrl={step.avatarUrl} position={step.position} size={40} />
             </div>
             <div className="mt-[7px] font-head text-[14px] font-bold tracking-[1px]">{step.login}</div>
             <div className="mono text-[11px] text-cyan">{step.score} PTS</div>

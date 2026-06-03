@@ -72,6 +72,8 @@ import App from '../App';
 
 describe('App archived/replay mode', () => {
   beforeEach(() => {
+    // Suppress the one-time grand-prix reveal so its overlay doesn't intercept clicks here.
+    localStorage.setItem('racingshape-recap-seen', '2026-06-01');
     vi.mocked(api.getRaceToday).mockResolvedValue(TODAY);
     vi.mocked(api.getRaces).mockResolvedValue(RACES);
     vi.mocked(api.getStats).mockResolvedValue(STATS);
