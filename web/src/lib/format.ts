@@ -1,6 +1,23 @@
 import { SCORE_WEIGHTS } from '@racingshape/shared';
-import type { RacerStanding, ScoreBreakdown, CompletionStat, StreakStat, ChartDay } from './types';
+import type {
+  RacerStanding,
+  ScoreBreakdown,
+  CompletionStat,
+  StreakStat,
+  ChartDay,
+  ReactionKind,
+  ReactionSummary,
+} from './types';
 import { tip } from './tooltip';
+
+const REACTION_KIND_ORDER: ReactionKind[] = ['🔥', '⚡', '🏎️'];
+
+/** Body for the reaction-count tooltip: total + per-kind breakdown + the cosmetic-only note. */
+export function reactionSummaryBody(r: ReactionSummary): string {
+  const parts = REACTION_KIND_ORDER.filter((k) => r.byKind[k] > 0).map((k) => `${k} ${r.byKind[k]}`);
+  const line = parts.length ? parts.join(' · ') : 'No boosts yet';
+  return `${r.total} cosmetic reactions from teammates · ${line}. Never affects score.`;
+}
 
 function plural(n: number, one: string, many: string): string {
   return n === 1 ? one : many;

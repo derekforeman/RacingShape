@@ -1,29 +1,47 @@
-import { useState } from 'react';
-import type { RacerStanding } from '../lib/types';
+import { useState, useEffect } from 'react';
+import type { RacerStanding, ReactionSummary } from '../lib/types';
 import { standingTip } from '../lib/format';
-import { tip } from '../lib/tooltip';
 import { colorFor, initialsFor } from './TimingTower';
 import { Cosmetics } from './cosmetics/Cosmetics';
+import { ReactionCount } from './ReactionCount';
+import { BoostButton } from './BoostButton';
+import { tip } from '../lib/tooltip';
 
 /** Canonical auto-scale (roadmap §10): leader ~82%, empty idles at 2%, no /0. */
 export function carPct(score: number, topScore: number): number {
   return 2 + (score / Math.max(topScore, 1)) * 80;
 }
 
-function reactionTip(s: RacerStanding): string {
-  const k = s.reactions.byKind;
-  return tip(
-    'Pit-stop boosts',
-    `${s.reactions.total} cosmetic reactions from teammates · 🔥${k['🔥']} ⚡${k['⚡']} 🏎️${k['🏎️']}. Never affects score.`,
-  );
-}
-
-export function Car({ standing, topScore }: { standing: RacerStanding; topScore: number }) {
+export function Car({
+  standing,
+  topScore,
+  live,
+  reactor,
+  displayScore,
+}: {
+  standing: RacerStanding;
+  topScore: number;
+  /** When true the boost button is enabled; false = archived read-only; undefined = no boost button. */
+  live?: boolean;
+  reactor?: string;
+  /** Replay/archived: overrides the standing score for car positioning (interpolated). */
+  displayScore?: number;
+}) {
   const [avatarBroken, setAvatarBroken] = useState(false);
   const color = colorFor(standing.login);
   const initials = initialsFor(standing.login);
-  const left = `${carPct(standing.score, topScore)}%`;
+  const left = `${carPct(displayScore ?? standing.score, topScore)}%`;
   const podTip = standingTip(standing);
+
+  // Optimistic reaction summary, re-synced whenever the server-supplied standing changes.
+  const [reactions, setReactions] = useState<ReactionSummary>(standing.reactions);
+  useEffect(() => setReactions(standing.reactions), [standing.reactions]);
+
+  const bumpLocal = () =>
+    setReactions((r) => ({
+      total: r.total + 1,
+      byKind: { ...r.byKind, '⚡': r.byKind['⚡'] + 1 },
+    }));
 
   return (
     <div
@@ -74,15 +92,20 @@ export function Car({ standing, topScore }: { standing: RacerStanding; topScore:
 
         <span
           data-tip={podTip}
-          className="clabel mono flex cursor-help items-center gap-[5px] whitespace-nowrap rounded-[5px] border border-line bg-panel2 px-[7px] py-[1px] font-head text-[12px] font-semibold tracking-[.5px]"
+          className="clabel mono relative flex cursor-help items-center gap-[5px] whitespace-nowrap rounded-[5px] border border-line bg-panel2 px-[7px] py-[1px] font-head text-[12px] font-semibold tracking-[.5px]"
         >
           {standing.login}
-          <span
-            data-testid="reaction-count"
-            data-tip={reactionTip(standing)}
-            className="mono cursor-help text-[10px] font-bold text-accent2"
-          >
-            {standing.reactions.total}🔥
+          <span className="ml-[5px] inline-flex items-center gap-[4px]">
+            <ReactionCount reactions={reactions} />
+            {live !== undefined && (
+              <BoostButton
+                targetLogin={standing.login}
+                reactor={reactor ?? 'you'}
+                live={live}
+                onClickOptimistic={bumpLocal}
+                onBoosted={(s) => setReactions(s)}
+              />
+            )}
           </span>
         </span>
       </div>
