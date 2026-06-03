@@ -16,4 +16,11 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // Tests use `as any` for fakes/db-row casts and inline mocks — allowed in test files only.
+    files: ['**/test/**/*.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
 );

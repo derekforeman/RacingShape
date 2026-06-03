@@ -11,17 +11,31 @@ export interface EventRow {
   raceDate: string; // YYYY-MM-DD (NY)
 }
 
-/** Insert events, ignoring duplicates by primary-key id. Idempotent re-poll. */
-export function insertEventsIgnore(db: Db, events: EventRow[]): void {
-  if (events.length === 0) return;
+/** Insert events, ignoring duplicates by primary-key id. Idempotent re-poll.
+ *  Returns the number of rows actually inserted (0 when all were duplicates). */
+export function insertEventsIgnore(db: Db, events: EventRow[]): number {
+  if (events.length === 0) return 0;
   const stmt = db.prepare(
     `INSERT OR IGNORE INTO events (id, racer_login, type, points, occurred_at, race_date)
      VALUES (@id, @racerLogin, @type, @points, @occurredAt, @raceDate)`,
   );
   const insertMany = db.transaction((rows: EventRow[]) => {
-    for (const r of rows) stmt.run(r);
+    let inserted = 0;
+    for (const r of rows) inserted += stmt.run(r).changes;
+    return inserted;
   });
-  insertMany(events);
+  return insertMany(events);
+}
+
+/** All events for a single race_date (any order). */
+export function eventsForDate(db: Db, raceDate: string): EventRow[] {
+  return db
+    .prepare(
+      `SELECT id, racer_login AS racerLogin, type, points, occurred_at AS occurredAt, race_date AS raceDate
+       FROM events
+       WHERE race_date = ?`,
+    )
+    .all(raceDate) as EventRow[];
 }
 
 /** Per-racer count of each event type for a single race_date. */

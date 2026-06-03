@@ -39,6 +39,30 @@ export function summaryForDate(db: Db, raceDate: string, targetLogin: string): R
   return { total, byKind };
 }
 
+/** Per-target reaction summaries for a day, keyed by target login (all targets at once). */
+export function summariesForDate(db: Db, raceDate: string): Map<string, ReactionSummary> {
+  const rows = db
+    .prepare(
+      `SELECT target_racer_login AS login, kind, COUNT(*) AS n
+       FROM reactions
+       WHERE race_date = ?
+       GROUP BY target_racer_login, kind`,
+    )
+    .all(raceDate) as { login: string; kind: ReactionKind; n: number }[];
+
+  const map = new Map<string, ReactionSummary>();
+  for (const row of rows) {
+    let summary = map.get(row.login);
+    if (!summary) {
+      summary = { total: 0, byKind: ZERO_BY_KIND() };
+      map.set(row.login, summary);
+    }
+    summary.byKind[row.kind] = row.n;
+    summary.total += row.n;
+  }
+  return map;
+}
+
 /** All reactions for a day, ordered by createdAt asc (for archive/replay). */
 export function listForDate(db: Db, raceDate: string): ArchivedReaction[] {
   const rows = db
