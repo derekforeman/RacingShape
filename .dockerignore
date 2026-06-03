@@ -1,0 +1,19 @@
+# Force a clean install + fresh build inside the image.
+node_modules
+**/node_modules
+dist
+**/dist
+*.tsbuildinfo
+
+# Local data + secrets — never bake these into an image.
+data
+.env
+.env.*
+
+# Not needed in the build context.
+.git
+.github
+docs
+mockup-*.html
+*.md
+fly.toml
