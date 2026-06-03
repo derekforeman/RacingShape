@@ -2,7 +2,19 @@ import type { RacerStanding } from '../lib/types';
 import { Car } from './Car';
 import { tip } from '../lib/tooltip';
 
-export function Track({ standings, topScore }: { standings: RacerStanding[]; topScore: number }) {
+export function Track({
+  standings,
+  topScore,
+  live,
+  reactor,
+  displayScoreFor,
+}: {
+  standings: RacerStanding[];
+  topScore: number;
+  live?: boolean;
+  reactor?: string;
+  displayScoreFor?: (login: string) => number | undefined;
+}) {
   const ordered = [...standings].sort((a, b) => a.position - b.position);
   return (
     <div className="relative px-[14px] pb-[6px] pt-[14px]">
@@ -27,7 +39,13 @@ export function Track({ standings, topScore }: { standings: RacerStanding[]; top
           }}
         >
           <div className="absolute bottom-[6px] left-[8px] top-[6px] w-[3px] bg-muted opacity-40" />
-          <Car standing={r} topScore={topScore} />
+          <Car
+            standing={r}
+            topScore={topScore}
+            live={live}
+            reactor={reactor}
+            displayScore={displayScoreFor?.(r.login)}
+          />
         </div>
       ))}
     </div>

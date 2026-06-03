@@ -75,10 +75,12 @@ describe('App integration', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
   });
 
-  it('shows an error state when the race fetch fails', async () => {
+  it('degrades gracefully when the race fetch fails (no crash, shows the empty grid)', async () => {
     const api = await import('../lib/api');
-    (api.getRaceToday as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('boom'));
+    (api.getRaceToday as unknown as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('boom'));
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId('race-error')).toBeInTheDocument());
+    // App keeps rendering: with no race data it shows the inviting empty-state grid.
+    await waitFor(() => expect(screen.getByTestId('empty-state')).toBeInTheDocument());
+    expect(screen.getByText('RACINGSHAPE')).toBeInTheDocument();
   });
 });

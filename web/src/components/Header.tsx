@@ -1,7 +1,25 @@
+import type { RaceListItem } from '../lib/types';
 import { tip } from '../lib/tooltip';
 import { useTheme } from '../lib/useTheme';
+import { DateSelector } from './DateSelector';
+import { ReplayControls } from './ReplayControls';
 
-export function Header() {
+export interface HeaderProps {
+  live: boolean;
+  races: RaceListItem[];
+  selectedDate: string;
+  onSelectDate: (value: string) => void;
+  replay: {
+    enabled: boolean;
+    playing: boolean;
+    speed: number;
+    onPlay: () => void;
+    onPause: () => void;
+    onSpeed: (s: number) => void;
+  };
+}
+
+export function Header({ live, races, selectedDate, onSelectDate, replay }: HeaderProps) {
   const { theme, toggle } = useTheme();
 
   return (
@@ -11,9 +29,7 @@ export function Header() {
           🏁
         </div>
         <div>
-          <h1 className="font-head text-[24px] font-bold leading-none tracking-[3px]">
-            RACINGSHAPE
-          </h1>
+          <h1 className="font-head text-[24px] font-bold leading-none tracking-[3px]">RACINGSHAPE</h1>
           <div className="mono mt-[3px] text-[10px] tracking-[2px] text-muted">
             SHIP CODE · RACE CARS · WIN THE DAY
           </div>
@@ -23,42 +39,22 @@ export function Header() {
       <div className="flex-1" />
 
       <div className="flex flex-wrap items-center gap-[9px]">
-        <div
-          data-testid="live-chip"
-          data-tip={tip(
-            'Live race',
-            'Polling GitHub every 60s. Scores recompute and cars animate to new positions on each poll.',
-          )}
-          className="flex cursor-help items-center gap-[7px] rounded-[7px] border border-accent bg-accent px-[13px] py-[9px] font-head text-[14px] font-semibold tracking-[1px] text-white"
-        >
-          <span className="h-[8px] w-[8px] animate-pulse rounded-full bg-white" />
-          LIVE
-        </div>
+        {live && (
+          <div
+            data-testid="live-chip"
+            data-tip={tip(
+              'Live race',
+              'Polling GitHub every 60s. Scores recompute and cars animate to new positions on each poll.',
+            )}
+            className="flex cursor-help items-center gap-[7px] rounded-[7px] border border-accent bg-accent px-[13px] py-[9px] font-head text-[14px] font-semibold tracking-[1px] text-white"
+          >
+            <span className="h-[8px] w-[8px] animate-pulse rounded-full bg-white" />
+            LIVE
+          </div>
+        )}
 
-        {/* PLAN 04: real date selector + archived days. Disabled stub for now. */}
-        <select
-          data-testid="date-selector"
-          disabled
-          defaultValue="JUN 02 · TODAY"
-          data-tip={tip(
-            'Race day',
-            'Switch between today and archived days. (Coming soon — archived replay arrives in the next release.)',
-          )}
-          className="cursor-not-allowed appearance-none rounded-[7px] border border-line bg-panel2 px-[13px] py-[9px] font-head text-[14px] font-semibold tracking-[1px] text-ink opacity-60"
-        >
-          <option>JUN 02 · TODAY</option>
-        </select>
-
-        {/* PLAN 04: replay engine. Disabled stub for now. */}
-        <button
-          type="button"
-          data-testid="replay-btn"
-          disabled
-          data-tip={tip('Replay', 'Play an archived day back as a ~15s fast-forward. (Coming soon.)')}
-          className="flex cursor-not-allowed items-center gap-[7px] rounded-[7px] border border-line bg-panel2 px-[13px] py-[9px] font-head text-[14px] font-semibold tracking-[1px] text-ink opacity-60"
-        >
-          ▶ REPLAY
-        </button>
+        <DateSelector races={races} selected={selectedDate} onSelect={onSelectDate} />
+        <ReplayControls {...replay} />
 
         <button
           type="button"

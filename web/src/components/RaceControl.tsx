@@ -3,7 +3,19 @@ import { TimingTower } from './TimingTower';
 import { Track } from './Track';
 import { tip } from '../lib/tooltip';
 
-export function RaceControl({ standings, topScore }: { standings: RacerStanding[]; topScore: number }) {
+export function RaceControl({
+  standings,
+  topScore,
+  live,
+  reactor,
+  displayScoreFor,
+}: {
+  standings: RacerStanding[];
+  topScore: number;
+  live?: boolean;
+  reactor?: string;
+  displayScoreFor?: (login: string) => number | undefined;
+}) {
   const empty = standings.length === 0;
 
   return (
@@ -35,7 +47,13 @@ export function RaceControl({ standings, topScore }: { standings: RacerStanding[
       ) : (
         <div className="grid grid-cols-[230px_1fr] max-[640px]:grid-cols-1">
           <TimingTower standings={standings} />
-          <Track standings={standings} topScore={topScore} />
+          <Track
+            standings={standings}
+            topScore={topScore}
+            live={live}
+            reactor={reactor}
+            displayScoreFor={displayScoreFor}
+          />
         </div>
       )}
     </div>
