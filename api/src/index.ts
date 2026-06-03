@@ -1,0 +1,55 @@
+import { mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
+import { loadConfig } from './config.js';
+import { openDb } from './db/connection.js';
+import { migrate } from './db/migrate.js';
+import { createApp } from './app.js';
+import { makeOctokit } from './github/client.js';
+import { makeFetchBatch } from './github/fetchActivity.js';
+import { Poller } from './github/poller.js';
+import { ResetScheduler } from './scheduler/resetScheduler.js';
+import { raceDateFor, msUntilNextNyMidnight } from './time/raceDate.js';
+
+function main(): void {
+  const config = loadConfig(process.env);
+  // Ensure the SQLite directory exists before opening (no-op for ':memory:').
+  if (config.dbPath !== ':memory:') {
+    mkdirSync(dirname(config.dbPath), { recursive: true });
+  }
+  const db = openDb(config.dbPath);
+  migrate(db);
+
+  const octokit = makeOctokit(config);
+  const request = octokit.request as unknown as Parameters<typeof makeFetchBatch>[1];
+  const fetchBatch = makeFetchBatch(db, request, config);
+
+  const poller = new Poller({
+    db,
+    clock: () => new Date(),
+    pollIntervalMs: config.pollIntervalMs,
+    snapshotIntervalMs: config.snapshotIntervalMs,
+    fetchBatch,
+    setTimer: (fn, ms) => setTimeout(fn, ms),
+    clearTimer: (h) => clearTimeout(h),
+  });
+
+  const scheduler = new ResetScheduler({
+    clock: () => new Date(),
+    msUntilNextNyMidnight,
+    raceDateFor,
+    snapshot: (raceDate, at) => poller.snapshotNow(raceDate, at),
+    setTimer: (fn, ms) => setTimeout(fn, ms),
+    clearTimer: (h) => clearTimeout(h),
+  });
+
+  const app = createApp({ db, config, clock: () => new Date() });
+
+  poller.start();
+  scheduler.start();
+
+  app.listen(config.port, () => {
+    console.log(`RacingShape API listening on :${config.port}`);
+  });
+}
+
+main();
