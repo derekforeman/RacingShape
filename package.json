@@ -8,14 +8,17 @@
   },
   "workspaces": [
     "shared",
-    "api"
+    "api",
+    "web"
   ],
   "scripts": {
-    "build": "npm run build -w @racingshape/shared && npm run build -w @racingshape/api",
+    "build": "npm run build --workspaces --if-present",
     "test": "vitest run",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
-    "dev": "npm run dev -w @racingshape/api"
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:api": "npm run dev -w @racingshape/api",
+    "dev:web": "npm run dev -w @racingshape/web"
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",
