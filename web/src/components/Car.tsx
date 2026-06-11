@@ -18,6 +18,8 @@ export function Car({
   live,
   reactor,
   displayScore,
+  onCheer,
+  cheerFx,
 }: {
   standing: RacerStanding;
   topScore: number;
@@ -26,6 +28,10 @@ export function Car({
   reactor?: string;
   /** Replay/archived: overrides the standing score for car positioning (interpolated). */
   displayScore?: number;
+  /** Called when the viewer clicks the car pod to cheer this racer. Cosmetic only — never changes score. */
+  onCheer?: (login: string) => void;
+  /** Active cheer bubbles targeting this car, from useSpectators().cheerFx. */
+  cheerFx?: { id: number; label: string }[];
 }) {
   const [avatarBroken, setAvatarBroken] = useState(false);
   const color = colorFor(standing.login);
@@ -66,13 +72,40 @@ export function Car({
 
       <Cosmetics cosmetics={standing.cosmetics} />
 
-      <div
-        data-testid="car-pod"
-        data-tip={podTip}
-        className="relative flex h-[22px] w-[50px] cursor-help items-center rounded-[4px_11px_11px_4px] pl-[5px] shadow-[0_2px_6px_rgba(0,0,0,.4)]"
-        style={{ background: color }}
-      >
-        <span className="mono text-[11px] font-bold text-white">{initials}</span>
+      <div className="relative">
+        {/* Cheer bubbles — cosmetic only, never touch score */}
+        {cheerFx && cheerFx.slice(-2).map((fx, i) => (
+          <span
+            key={fx.id}
+            data-testid="cheer-bubble"
+            className="cheer"
+            style={{ bottom: `${26 + i * 22}px`, left: '50%', transform: 'translateX(-50%)' }}
+          >
+            {fx.label} 🙌
+          </span>
+        ))}
+        <div
+          data-testid="car-pod"
+          data-tip={onCheer ? tip('Cheer 🙌', 'Click to cheer this racer! Cosmetic only — never changes score.') : podTip}
+          className={`relative flex h-[22px] w-[50px] items-center rounded-[4px_11px_11px_4px] pl-[5px] shadow-[0_2px_6px_rgba(0,0,0,.4)] ${onCheer ? 'cursor-pointer hover:brightness-125 active:scale-95 transition-[filter,transform] duration-[120ms]' : 'cursor-help'}`}
+          style={{ background: color }}
+          onClick={onCheer ? () => onCheer(standing.login) : undefined}
+          onKeyDown={
+            onCheer
+              ? (e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onCheer(standing.login);
+                  }
+                }
+              : undefined
+          }
+          role={onCheer ? 'button' : undefined}
+          tabIndex={onCheer ? 0 : undefined}
+          aria-label={onCheer ? `Cheer ${standing.login}` : undefined}
+        >
+          <span className="mono text-[11px] font-bold text-white">{initials}</span>
+        </div>
       </div>
 
       <div

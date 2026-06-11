@@ -94,6 +94,11 @@ export default function App() {
     return Object.fromEntries(src.filter((s) => s.cosmetics.length > 0).map((s) => [s.login, s.cosmetics]));
   }, [isLive, archive]);
 
+  const cheerFxFor = useCallback(
+    (login: string) => spectators.cheerFx.filter((fx) => fx.targetLogin === login).map(({ id, label }) => ({ id, label })),
+    [spectators.cheerFx],
+  );
+
   const onExportPng = useCallback(() => {
     void exportNodeToPng(document.getElementById('recap-card'), `racingshape-${selectedDate}.png`);
   }, [selectedDate]);
@@ -184,6 +189,8 @@ export default function App() {
               myFlag={spectators.myFlag}
               onName={spectators.setMyName}
               onFlag={spectators.setMyFlag}
+              onCheer={spectators.cheer}
+              cheerFxFor={cheerFxFor}
             />
             <div className="mt-[16px]">{stats.data && <TelemetryChart stats={stats.data} />}</div>
             {!isLive && archive && (

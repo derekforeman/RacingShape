@@ -17,6 +17,8 @@ export function RaceControl({
   myFlag,
   onName,
   onFlag,
+  onCheer,
+  cheerFxFor,
 }: {
   standings: RacerStanding[];
   topScore: number;
@@ -28,6 +30,8 @@ export function RaceControl({
   myFlag?: string | null;
   onName?: (n: string | null) => void;
   onFlag?: (f: string | null) => void;
+  onCheer?: (login: string) => void;
+  cheerFxFor?: (login: string) => { id: number; label: string }[];
 }) {
   const empty = standings.length === 0;
 
@@ -66,6 +70,8 @@ export function RaceControl({
             live={live}
             reactor={reactor}
             displayScoreFor={displayScoreFor}
+            onCheer={onCheer}
+            cheerFxFor={cheerFxFor}
           />
         </div>
       )}
