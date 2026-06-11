@@ -1,16 +1,29 @@
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import { join } from 'node:path';
-import { timingSafeEqual } from 'node:crypto';
+import { timingSafeEqual, randomUUID } from 'node:crypto';
 import type Database from 'better-sqlite3';
 import type { AppConfig } from './config.js';
 import { raceRouter } from './routes/race.js';
 import { racesRouter } from './routes/races.js';
 import { statsRouter } from './routes/stats.js';
+import { spectatorsRouter } from './routes/spectators.js';
+import { SseHub } from './spectators/sse.js';
+import { SpectatorRegistry } from './spectators/registry.js';
+import { raceDateFor } from './time/raceDate.js';
+import { getViewerPeak, upsertViewerPeak } from './db/repositories/viewerPeaks.js';
+import { insertCheer } from './db/repositories/reactions.js';
+
+export interface SpectatorRuntime {
+  registry: SpectatorRegistry;
+  hub: SseHub;
+}
 
 export interface AppDeps {
   db: Database.Database;
   config: AppConfig;
   clock: () => Date;
+  geo?: (ip: string) => Promise<string | null>; // default: always null
+  onSpectators?: (rt: SpectatorRuntime) => void; // index.ts hooks the reaper here
 }
 
 /**
@@ -55,10 +68,40 @@ export function createApp(deps: AppDeps): Express {
 
   app.use(express.json());
 
+  app.set('trust proxy', true);
+
+  const hub = new SseHub();
+  const registry = new SpectatorRegistry({
+    now: () => clock().getTime(),
+    isoNow: () => clock().toISOString(),
+    raceDate: () => raceDateFor(clock()),
+    peaks: {
+      getPeak: (d) => {
+        const p = getViewerPeak(db, d);
+        return p ? { count: p.peakCount, at: p.peakAt } : null;
+      },
+      setPeak: (d, count, at) => upsertViewerPeak(db, d, count, at),
+    },
+  });
+  app.use('/api/spectators', spectatorsRouter({
+    registry,
+    hub,
+    geo: deps.geo ?? (async () => null),
+    insertCheer: ({ targetLogin, label, raceDate, createdAt }) =>
+      insertCheer(db, { id: randomUUID(), raceDate, targetLogin, label, createdAt }),
+    raceDate: () => raceDateFor(clock()),
+    isoNow: () => clock().toISOString(),
+    cooldownMs: 5000,
+  }));
+  deps.onSpectators?.({ registry, hub });
+
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true });
   });
-  app.use('/api/race', raceRouter(db, clock));
+  app.use('/api/race', raceRouter(db, clock, () => {
+    const s = registry.snapshot();
+    return { count: s.count, peak: s.peak, peakAt: s.peakAt };
+  }));
   app.use('/api/races', racesRouter(db));
   app.use('/api/stats', statsRouter(db, config, clock));
 

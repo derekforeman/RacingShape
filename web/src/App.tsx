@@ -19,6 +19,8 @@ import { PitWall } from './components/PitWall';
 import { Recap } from './components/Recap';
 import { GrandPrixReveal } from './components/GrandPrixReveal';
 import { useReplay } from './replay/useReplay';
+import { useReplayCheerFx } from './replay/useReplayCheerFx';
+import { useSpectators } from './lib/useSpectators';
 import { exportNodeToPng } from './lib/exportPng';
 
 const POLL_MS = 60_000;
@@ -76,6 +78,17 @@ export default function App() {
   const frames = useMemo(() => archive?.frames ?? [], [archive]);
   const replay = useReplay(frames);
 
+  // replay cheer bubbles — source:'cheer' reactions surface as transient Car cheerFx bubbles
+  const replayCheerFx = useReplayCheerFx(
+    replay.t,
+    frames,
+    archive?.reactions ?? [],
+    !isLive,
+  );
+
+  // live spectator presence (SSE-based)
+  const spectators = useSpectators();
+
   // which standings + per-racer display score to render
   const standings: RacerStanding[] = isLive ? today.data?.standings ?? [] : archive?.standings ?? [];
   const topScore = isLive ? today.data?.topScore ?? 1 : archive?.topScore ?? 1;
@@ -89,6 +102,15 @@ export default function App() {
     const src = isLive ? [] : archive?.standings ?? [];
     return Object.fromEntries(src.filter((s) => s.cosmetics.length > 0).map((s) => [s.login, s.cosmetics]));
   }, [isLive, archive]);
+
+  const cheerFxFor = useCallback(
+    (login: string) => {
+      const liveFx = spectators.cheerFx.filter((fx) => fx.targetLogin === login).map(({ id, label }) => ({ id, label }));
+      const archiveFx = replayCheerFx.filter((fx) => fx.targetLogin === login).map(({ id, label }) => ({ id, label }));
+      return [...liveFx, ...archiveFx];
+    },
+    [spectators.cheerFx, replayCheerFx],
+  );
 
   const onExportPng = useCallback(() => {
     void exportNodeToPng(document.getElementById('recap-card'), `racingshape-${selectedDate}.png`);
@@ -164,6 +186,7 @@ export default function App() {
             onPause: replay.pause,
             onSpeed: replay.setSpeed,
           }}
+          spectators={spectators}
         />
 
         <div className="mt-[16px] grid grid-cols-[1fr_310px] gap-[16px] max-[940px]:grid-cols-1">
@@ -174,6 +197,13 @@ export default function App() {
               live={isLive}
               reactor={REACTOR}
               displayScoreFor={displayScoreFor}
+              fans={spectators.fans}
+              myName={spectators.myName}
+              myFlag={spectators.myFlag}
+              onName={spectators.setMyName}
+              onFlag={spectators.setMyFlag}
+              onCheer={spectators.cheer}
+              cheerFxFor={cheerFxFor}
             />
             <div className="mt-[16px]">{stats.data && <TelemetryChart stats={stats.data} />}</div>
             {!isLive && archive && (
@@ -182,6 +212,7 @@ export default function App() {
                 cosmeticsByLogin={cosmeticsByLogin}
                 onExportPng={onExportPng}
                 replayLink={replayLink}
+                crowdPeak={stats.data?.crowd.peaks.find((p) => p.date === archive.recap.raceDate)?.peak}
               />
             )}
           </div>

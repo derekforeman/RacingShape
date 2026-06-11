@@ -1,6 +1,9 @@
+import type { SpectatorFan } from '@racingshape/shared';
 import type { RacerStanding } from '../lib/types';
 import { TimingTower } from './TimingTower';
 import { Track } from './Track';
+import { Grandstand } from './Grandstand';
+import { colorFor } from './TimingTower';
 import { tip } from '../lib/tooltip';
 
 export function RaceControl({
@@ -9,12 +12,26 @@ export function RaceControl({
   live,
   reactor,
   displayScoreFor,
+  fans,
+  myName,
+  myFlag,
+  onName,
+  onFlag,
+  onCheer,
+  cheerFxFor,
 }: {
   standings: RacerStanding[];
   topScore: number;
   live?: boolean;
   reactor?: string;
   displayScoreFor?: (login: string) => number | undefined;
+  fans?: SpectatorFan[];
+  myName?: string | null;
+  myFlag?: string | null;
+  onName?: (n: string | null) => void;
+  onFlag?: (f: string | null) => void;
+  onCheer?: (login: string) => void;
+  cheerFxFor?: (login: string) => { id: number; label: string }[];
 }) {
   const empty = standings.length === 0;
 
@@ -53,8 +70,21 @@ export function RaceControl({
             live={live}
             reactor={reactor}
             displayScoreFor={displayScoreFor}
+            onCheer={onCheer}
+            cheerFxFor={cheerFxFor}
           />
         </div>
+      )}
+
+      {fans && fans.length > 0 && (
+        <Grandstand
+          fans={fans}
+          colorForLogin={colorFor}
+          myName={myName ?? null}
+          myFlag={myFlag ?? null}
+          onName={onName ?? (() => {})}
+          onFlag={onFlag ?? (() => {})}
+        />
       )}
     </div>
   );

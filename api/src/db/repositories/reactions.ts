@@ -14,9 +14,24 @@ const ZERO_BY_KIND = (): Record<ReactionKind, number> => ({ '🔥': 0, '⚡': 0,
 
 export function insertReaction(db: Db, r: ReactionRow): void {
   db.prepare(
-    `INSERT OR IGNORE INTO reactions (id, race_date, target_racer_login, kind, reactor, created_at)
-     VALUES (@id, @raceDate, @targetLogin, @kind, @reactor, @createdAt)`,
+    `INSERT OR IGNORE INTO reactions (id, race_date, target_racer_login, kind, reactor, created_at, source)
+     VALUES (@id, @raceDate, @targetLogin, @kind, @reactor, @createdAt, 'boost')`,
   ).run(r);
+}
+
+export interface CheerRow {
+  id: string;
+  raceDate: string;
+  targetLogin: string;
+  label: string; // self-set name or 'a fan'
+  createdAt: string;
+}
+
+export function insertCheer(db: Db, c: CheerRow): void {
+  db.prepare(
+    `INSERT OR IGNORE INTO reactions (id, race_date, target_racer_login, kind, reactor, created_at, source)
+     VALUES (@id, @raceDate, @targetLogin, '🙌', @label, @createdAt, 'cheer')`,
+  ).run(c);
 }
 
 /** Reaction totals + per-kind breakdown for one target on one day. */
@@ -25,7 +40,7 @@ export function summaryForDate(db: Db, raceDate: string, targetLogin: string): R
     .prepare(
       `SELECT kind, COUNT(*) AS n
        FROM reactions
-       WHERE race_date = ? AND target_racer_login = ?
+       WHERE race_date = ? AND target_racer_login = ? AND source = 'boost'
        GROUP BY kind`,
     )
     .all(raceDate, targetLogin) as { kind: ReactionKind; n: number }[];
@@ -45,7 +60,7 @@ export function summariesForDate(db: Db, raceDate: string): Map<string, Reaction
     .prepare(
       `SELECT target_racer_login AS login, kind, COUNT(*) AS n
        FROM reactions
-       WHERE race_date = ?
+       WHERE race_date = ? AND source = 'boost'
        GROUP BY target_racer_login, kind`,
     )
     .all(raceDate) as { login: string; kind: ReactionKind; n: number }[];
@@ -67,7 +82,7 @@ export function summariesForDate(db: Db, raceDate: string): Map<string, Reaction
 export function listForDate(db: Db, raceDate: string): ArchivedReaction[] {
   const rows = db
     .prepare(
-      `SELECT target_racer_login AS targetLogin, kind, reactor, created_at AS createdAt
+      `SELECT target_racer_login AS targetLogin, kind, reactor, created_at AS createdAt, source
        FROM reactions
        WHERE race_date = ?
        ORDER BY created_at ASC`,

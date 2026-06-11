@@ -14,6 +14,7 @@ describe('loadConfig', () => {
     expect(cfg.pollIntervalMs).toBe(60_000);
     expect(cfg.snapshotIntervalMs).toBe(300_000);
     expect(cfg.dbPath).toBe('./data/racingshape.db');
+    expect(cfg.geoEnabled).toBe(false);
   });
 
   it('reads an empty token in test mode without throwing', () => {
@@ -39,6 +40,12 @@ describe('loadConfig', () => {
     expect(cfg.pollIntervalMs).toBe(30_000);
     expect(cfg.snapshotIntervalMs).toBe(120_000);
     expect(cfg.dbPath).toBe('/tmp/rs.db');
+    expect(cfg.geoEnabled).toBe(false);
+  });
+
+  it('enables geo when GEO_ENABLED is "true"', () => {
+    const cfg = loadConfig({ NODE_ENV: 'test', GEO_ENABLED: 'true' });
+    expect(cfg.geoEnabled).toBe(true);
   });
 
   it('throws when GITHUB_TOKEN is missing outside test mode', () => {

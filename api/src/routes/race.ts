@@ -1,15 +1,22 @@
 import { Router } from 'express';
 import type Database from 'better-sqlite3';
+import type { ViewersSummary } from '@racingshape/shared';
 import { getToday, getArchive } from '../services/raceService.js';
 import { reactionsRouter } from './reactions.js';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-export function raceRouter(db: Database.Database, clock: () => Date): Router {
+export function raceRouter(
+  db: Database.Database,
+  clock: () => Date,
+  getViewers?: () => ViewersSummary,
+): Router {
   const router = Router();
 
   router.get('/today', (_req, res) => {
-    res.json(getToday(db, clock()));
+    const today = getToday(db, clock());
+    if (getViewers) today.viewers = getViewers();
+    res.json(today);
   });
 
   // mount POST /today/reactions before the :date catch-all
