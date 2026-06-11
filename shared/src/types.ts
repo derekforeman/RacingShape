@@ -146,11 +146,11 @@ export interface CreateReactionResponse {
 
 // ---- Spectators ----
 export interface SpectatorFan {
-  id: string;                    // opaque per-session id (NOT the secret sessionId)
+  id: string;                    // per-session id; client matches against its own sessionId to find itself
   name: string | null;          // null = anonymous
   flag: string | null;          // emoji, e.g. "🇨🇦"
   cheerForLogin: string | null; // racer this fan is cheering, if any
-  isSelf?: boolean;             // server marks the requester's own entry
+  isSelf?: boolean;             // computed client-side (never in shared broadcasts)
   watchingForSec: number;
 }
 
