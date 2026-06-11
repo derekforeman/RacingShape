@@ -40,7 +40,10 @@ export function Grandstand({ fans, colorForLogin, myName, myFlag, onName, onFlag
             data-tip={tip(fanLabel, tipParts.join('\n'))}
             className={[
               'relative flex cursor-help flex-col items-center gap-[4px]',
-              f.name ? '' : 'opacity-40',
+              // Dim only OTHER anonymous fans (subtle, never shamed). Never dim your own
+              // fan — it must stay readable and its identity popover is a child of this
+              // node, so opacity here would make the popover translucent.
+              !f.name && !f.isSelf ? 'opacity-40' : '',
               f.isSelf
                 ? 'outline-1 outline-dashed outline-cyan rounded-[5px] px-[3px] cursor-pointer'
                 : '',

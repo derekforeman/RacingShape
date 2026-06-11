@@ -79,7 +79,7 @@ export function Car({
             key={fx.id}
             data-testid="cheer-bubble"
             className="cheer"
-            style={{ bottom: `${26 + i * 22}px`, left: '50%', transform: 'translateX(-50%)' }}
+            style={{ top: 'auto', bottom: `${26 + i * 22}px`, left: '50%', transform: 'translateX(-50%)' }}
           >
             {fx.label} 🙌
           </span>

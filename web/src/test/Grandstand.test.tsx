@@ -33,6 +33,12 @@ describe('Grandstand', () => {
     expect(fanEl.className).toContain('opacity-40');
   });
 
+  it('does NOT dim your own fan when anonymous (popover would inherit the opacity)', () => {
+    const fans = [fan({ id: 'me', name: null, flag: '🇨🇦', isSelf: true })];
+    render(<Grandstand fans={fans} colorForLogin={colorForLogin} myName={null} myFlag={null} onName={noop} onFlag={noop} />);
+    expect(screen.getByTestId('fan-self').className).not.toContain('opacity-40');
+  });
+
   it('shows +N overflow when fans.length > 24', () => {
     const fans = Array.from({ length: 27 }, (_, i) =>
       fan({ id: `f${i}`, name: `fan${i}` }),
@@ -63,7 +69,12 @@ describe('Grandstand', () => {
     );
     expect(screen.queryByTestId('identity-control')).not.toBeInTheDocument();
     fireEvent.click(screen.getByTestId('fan-self'));
-    expect(screen.getByTestId('identity-control')).toBeInTheDocument();
+    const popover = screen.getByTestId('identity-control');
+    expect(popover).toBeInTheDocument();
+    // Regression: must open left-aligned (rightward), not centered — a centered popover on
+    // the left-edge "you" fan overflows the overflow-hidden RaceControl panel and gets clipped.
+    expect(popover.className).toContain('left-0');
+    expect(popover.className).not.toContain('left-1/2');
   });
 
   it('typing a name and blurring calls onName with the trimmed value', () => {

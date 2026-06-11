@@ -16,7 +16,7 @@ export function IdentityControl({ name, flag, onName, onFlag, onClose }: Props) 
   return (
     <div
       data-testid="identity-control"
-      className="absolute bottom-full left-1/2 z-[10] mb-[8px] w-[200px] -translate-x-1/2 rounded-[8px] border border-line bg-panel2 p-[10px] shadow-[0_10px_30px_rgba(0,0,0,.45)]"
+      className="absolute bottom-full left-0 z-[10] mb-[8px] w-[200px] rounded-[8px] border border-line bg-panel2 p-[10px] shadow-[0_10px_30px_rgba(0,0,0,.45)]"
       onClick={(e) => e.stopPropagation()}
     >
       <label className="mono mb-[4px] block text-[9px] tracking-[1px] text-muted">YOUR NAME</label>

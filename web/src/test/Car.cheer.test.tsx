@@ -50,6 +50,9 @@ describe('Car cheer affordance', () => {
     renderCar({ cheerFx: [{ id: 1, label: 'Go go go!' }] });
     const bubble = screen.getByTestId('cheer-bubble');
     expect(bubble).toHaveTextContent('Go go go! 🙌');
+    // Regression: the .cheer class sets top:-14px; we must override top:auto so the pill
+    // isn't forced to a tiny height (top+bottom both set) and the text doesn't overflow it.
+    expect(bubble).toHaveStyle({ top: 'auto' });
   });
 
   it('renders up to 2 bubbles when multiple cheerFx are present', () => {
