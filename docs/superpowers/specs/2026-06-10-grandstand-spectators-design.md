@@ -31,7 +31,6 @@ ephemeral; only the peak count and the cheers (which replay on the cars) are per
 - No cross-device identity. Identity lives in `localStorage` only; no accounts, no server profile.
 - No WebSockets. SSE only.
 - Cheers never affect score. (Boosts-are-cosmetic-only rule.)
-- ip-api.com free tier is **not** used (non-commercial license vs. an internal company tool).
 
 ## 3. Product principles compliance
 
@@ -71,10 +70,15 @@ ephemeral; only the peak count and the cheers (which replay on the cars) are per
 ### 4.4 Geo — server-side, IP never reaches the browser
 - On the first heartbeat from a given IP, the server resolves IP → ISO country code, cached
   in-memory `Map<ip, countryCode>`. The country code maps to a flag emoji.
-- Provider must be **commercial-OK**: a local **MaxMind GeoLite2-Country** DB (preferred — zero
-  network calls, no per-request cost, redistributable under its license) or an `ipinfo` token.
-  Configured via env (e.g. `GEOLITE2_DB_PATH` or `IPINFO_TOKEN`); if unset, geo is simply skipped
-  and fans have no auto flag.
+- Provider: **ip-api.com free tier** — server-side outbound call to
+  `http://ip-api.com/json/{ip}?fields=status,countryCode`. Server-side use avoids the
+  HTTPS mixed-content problem (the endpoint is HTTP-only). Enabled via an env flag (e.g.
+  `GEO_ENABLED=true`); if disabled or the call fails, geo is skipped and fans have no auto flag.
+- **Rate limit:** free tier allows ~45 req/min per source IP. The in-memory `Map<ip, countryCode>`
+  cache means we only call once per distinct viewer IP, keeping us far under the limit. On HTTP 429
+  / `status:"fail"` / timeout, back off and skip gracefully (never block a heartbeat on geo).
+- **License:** free tier is non-commercial-only; using it on an internal company tool is an
+  accepted risk (decision by Derek).
 - The flag is **silently pre-filled** (no upfront modal). Disclosure: hovering your own flag shows
   a tooltip "set from your location · click to change or remove". A client override is stored in
   `localStorage` and suppresses the auto value.
@@ -221,9 +225,11 @@ live-only is driven by privacy (no who-watched-when log) and complexity, not byt
 
 ## 11. Risks / open questions
 
-- **Geo provider/license:** must pick a commercial-OK source. GeoLite2 local DB preferred (no
-  network, redistributable); requires shipping/refreshing the DB file and an env path. If neither
-  GeoLite2 nor ipinfo is configured, auto-flag is skipped gracefully.
+- **Geo provider/license:** ip-api.com free tier (decided). Non-commercial license is an accepted
+  risk. Operational risks: outbound HTTP dependency (handle failure by skipping), the 45 req/min
+  rate limit (mitigated by per-IP in-memory cache), and HTTP-only (mitigated by server-side calls).
+  If usage outgrows the free tier or the license becomes a concern, swap to a local GeoLite2 DB
+  behind the same `country = lookup(ip)` interface.
 - **SSE + basic auth:** confirm the optional `SITE_PASSWORD` middleware passes through `EventSource`
   requests (browsers send the auth header on same-origin SSE; verify during implementation).
 - **SSE behind any future proxy/buffering:** ensure `Cache-Control: no-cache`, `Connection:
