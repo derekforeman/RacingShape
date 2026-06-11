@@ -23,10 +23,10 @@ const COSMETICS: Record<string, Cosmetic[]> = {
   'mira-k': ['flame_trail'],
 };
 
-function renderRecap(recap = RECAP, earned = COSMETICS) {
+function renderRecap(recap = RECAP, earned = COSMETICS, crowdPeak?: number) {
   return render(
     <TooltipProvider>
-      <Recap recap={recap} cosmeticsByLogin={earned} onExportPng={() => {}} replayLink="http://x/race/2026-06-01" />
+      <Recap recap={recap} cosmeticsByLogin={earned} onExportPng={() => {}} replayLink="http://x/race/2026-06-01" crowdPeak={crowdPeak} />
     </TooltipProvider>,
   );
 }
@@ -80,5 +80,23 @@ describe('Recap', () => {
   it('renders nothing when there is no podium (empty day)', () => {
     const { container } = renderRecap({ ...RECAP, podium: [] }, {});
     expect(container.querySelector('[data-testid="recap-card"]')).toBeNull();
+  });
+
+  it('renders the biggest-crowd card when crowdPeak > 0', () => {
+    renderRecap(RECAP, COSMETICS, 42);
+    const card = screen.getByTestId('super-crowd-peak');
+    expect(card).toBeInTheDocument();
+    expect(card.textContent).toMatch(/Biggest crowd/i);
+    expect(card.textContent).toMatch(/42 fans/);
+  });
+
+  it('omits the biggest-crowd card when crowdPeak is 0', () => {
+    const { container } = renderRecap(RECAP, COSMETICS, 0);
+    expect(container.querySelector('[data-testid="super-crowd-peak"]')).toBeNull();
+  });
+
+  it('omits the biggest-crowd card when crowdPeak is undefined', () => {
+    const { container } = renderRecap(RECAP, COSMETICS, undefined);
+    expect(container.querySelector('[data-testid="super-crowd-peak"]')).toBeNull();
   });
 });

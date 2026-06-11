@@ -41,7 +41,8 @@ CREATE TABLE IF NOT EXISTS reactions (
   target_racer_login TEXT NOT NULL,
   kind               TEXT NOT NULL,
   reactor            TEXT NOT NULL,
-  created_at         TEXT NOT NULL
+  created_at         TEXT NOT NULL,
+  source             TEXT NOT NULL DEFAULT 'boost'
 );
 CREATE INDEX IF NOT EXISTS idx_reactions_racedate ON reactions(race_date);
 
@@ -56,5 +57,11 @@ CREATE TABLE IF NOT EXISTS http_cache (
 CREATE TABLE IF NOT EXISTS poll_meta (
   key   TEXT PRIMARY KEY,
   value TEXT
+);
+
+CREATE TABLE IF NOT EXISTS viewer_peaks (
+  race_date  TEXT PRIMARY KEY,
+  peak_count INTEGER NOT NULL,
+  peak_at    TEXT NOT NULL
 );
 `;

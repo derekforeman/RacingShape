@@ -6,6 +6,7 @@ import type {
   CreateReactionBody,
   CreateReactionResponse,
 } from './types';
+import type { HeartbeatBody, HeartbeatResponse, CheerBody, CheerResponse } from '@racingshape/shared';
 
 async function getJson<T>(url: string): Promise<T> {
   const res = await fetch(url, { headers: { Accept: 'application/json' } });
@@ -41,4 +42,24 @@ export async function postReaction(body: CreateReactionBody): Promise<CreateReac
     throw new Error(`Request to /api/race/today/reactions failed: ${res.status}`);
   }
   return (await res.json()) as CreateReactionResponse;
+}
+
+export async function postHeartbeat(body: HeartbeatBody): Promise<HeartbeatResponse> {
+  const res = await fetch('/api/spectators/heartbeat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`heartbeat ${res.status}`);
+  return res.json() as Promise<HeartbeatResponse>;
+}
+
+export async function postCheer(body: CheerBody): Promise<CheerResponse> {
+  const res = await fetch('/api/spectators/cheer', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) return { ok: false };
+  return res.json() as Promise<CheerResponse>;
 }

@@ -1,5 +1,26 @@
 import '@testing-library/jest-dom/vitest';
 
+// jsdom does not implement EventSource (SSE). Provide a silent no-op so that
+// useSpectators (and any component that calls it) can mount in App-level tests
+// without throwing "EventSource is not defined". Tests that need to exercise
+// real SSE behaviour (useSpectators.test.tsx) install their own FakeEventSource
+// via vi.stubGlobal, which overrides this default.
+class NoopEventSource {
+  static CONNECTING = 0;
+  static OPEN = 1;
+  static CLOSED = 2;
+  readyState = NoopEventSource.OPEN;
+  constructor(_url: string) {}
+  addEventListener() {}
+  removeEventListener() {}
+  dispatchEvent() { return true; }
+  close() {}
+}
+if (typeof globalThis.EventSource === 'undefined') {
+  // @ts-expect-error — EventSource is not in Node's types but we need it for jsdom tests.
+  globalThis.EventSource = NoopEventSource;
+}
+
 // Node 26 exposes an experimental global `localStorage` (gated behind a CLI flag,
 // otherwise undefined) that shadows jsdom's window.localStorage in the test global
 // scope. Install a deterministic in-memory Storage shim so theme/persistence tests

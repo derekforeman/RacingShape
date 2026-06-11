@@ -23,7 +23,7 @@ afterEach(() => {
 
 describe('api client', () => {
   it('getRaceToday hits /api/race/today and returns parsed JSON', async () => {
-    const payload = { raceDate: '2026-06-02', live: true, topScore: 44, standings: [], lastPolledAt: null } as RaceToday;
+    const payload = { raceDate: '2026-06-02', live: true, topScore: 44, standings: [], lastPolledAt: null, viewers: { count: 0, peak: 0, peakAt: null } } as RaceToday;
     fetchMock.mockResolvedValueOnce(jsonResponse(payload));
     const out = await getRaceToday();
     expect(fetchMock).toHaveBeenCalledWith('/api/race/today', expect.any(Object));
@@ -31,7 +31,7 @@ describe('api client', () => {
   });
 
   it('getStats encodes the range query', async () => {
-    const payload = { range: '14d', repoUrl: 'https://github.com/S2AI/s2shape', chart: [], totalTasks: { total: 0, issues: 0, prs: 0, deltaVsPriorWeek: 0 }, completion: { rate: 0, closed: 0, opened: 0 }, streak: { current: 0, startDate: null, bestThisMonth: 0 } } as StatsResponse;
+    const payload = { range: '14d', repoUrl: 'https://github.com/S2AI/s2shape', chart: [], totalTasks: { total: 0, issues: 0, prs: 0, deltaVsPriorWeek: 0 }, completion: { rate: 0, closed: 0, opened: 0 }, streak: { current: 0, startDate: null, bestThisMonth: 0 }, crowd: { peakToday: 0, peaks: [] } } as StatsResponse;
     fetchMock.mockResolvedValueOnce(jsonResponse(payload));
     const out = await getStats('14d');
     expect(fetchMock).toHaveBeenCalledWith('/api/stats?range=14d', expect.any(Object));

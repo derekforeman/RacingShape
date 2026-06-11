@@ -11,7 +11,7 @@ function freshDb() {
 }
 const config: AppConfig = {
   port: 8787, githubToken: 'x', repoOwner: 'S2AI', repoName: 's2shape',
-  pollIntervalMs: 60000, snapshotIntervalMs: 300000, dbPath: ':memory:',
+  pollIntervalMs: 60000, snapshotIntervalMs: 300000, dbPath: ':memory:', geoEnabled: false,
 };
 function addDaily(db: Database.Database, r: { date: string; commits?: number; prsOpened?: number; prsMerged?: number; issuesClosed?: number }) {
   db.prepare('INSERT OR REPLACE INTO daily_stats(race_date, commits, prs_opened, prs_merged, issues_closed) VALUES (?,?,?,?,?)').run(

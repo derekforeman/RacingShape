@@ -47,6 +47,7 @@ export function getToday(db: Database.Database, now: Date): RaceToday {
     topScore: topScoreOf(standings),
     standings,
     lastPolledAt: getMeta(db, 'last_polled_at') ?? null,
+    viewers: { count: 0, peak: 0, peakAt: null },
   };
 }
 

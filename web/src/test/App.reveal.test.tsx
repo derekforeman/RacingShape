@@ -8,6 +8,7 @@ const SEEN_KEY = 'racingshape-recap-seen';
 
 const TODAY: RaceToday = {
   raceDate: '2026-06-02', live: true, topScore: 1, lastPolledAt: null, standings: [],
+  viewers: { count: 0, peak: 0, peakAt: null },
 };
 const RACES: RaceListItem[] = [{ raceDate: '2026-06-01', topScore: 44, winnerLogin: 'devon-r' }];
 const ARCHIVE: RaceArchive = {
@@ -41,6 +42,7 @@ const STATS: StatsResponse = {
   totalTasks: { total: 0, issues: 0, prs: 0, deltaVsPriorWeek: 0 },
   completion: { rate: 0, closed: 0, opened: 0 },
   streak: { current: 0, startDate: null, bestThisMonth: 0 },
+  crowd: { peakToday: 0, peaks: [] },
 };
 
 vi.mock('../lib/api');

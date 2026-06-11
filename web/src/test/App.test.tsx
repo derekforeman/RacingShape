@@ -9,6 +9,7 @@ const { raceToday, stats } = vi.hoisted(() => {
     live: true,
     topScore: 44,
     lastPolledAt: '2026-06-02T15:00:00.000Z',
+    viewers: { count: 0, peak: 0, peakAt: null },
     standings: [
       {
         login: 'devon-r', displayName: 'devon-r', avatarUrl: 'https://x/d.png',
@@ -32,6 +33,7 @@ const { raceToday, stats } = vi.hoisted(() => {
     totalTasks: { total: 37, issues: 23, prs: 14, deltaVsPriorWeek: 9 },
     completion: { rate: 0.82, closed: 41, opened: 50 },
     streak: { current: 12, startDate: '2026-05-22', bestThisMonth: 12 },
+    crowd: { peakToday: 0, peaks: [] },
   };
 
   return { raceToday, stats };

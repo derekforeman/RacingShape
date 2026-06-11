@@ -1,8 +1,10 @@
 import type { RaceListItem } from '../lib/types';
+import type { SpectatorFan } from '@racingshape/shared';
 import { tip } from '../lib/tooltip';
 import { useTheme } from '../lib/useTheme';
 import { DateSelector } from './DateSelector';
 import { ReplayControls } from './ReplayControls';
+import { BroadcastBug } from './BroadcastBug';
 
 export interface HeaderProps {
   live: boolean;
@@ -17,9 +19,15 @@ export interface HeaderProps {
     onPause: () => void;
     onSpeed: (s: number) => void;
   };
+  spectators: {
+    count: number;
+    peak: number;
+    peakAt: string | null;
+    fans: SpectatorFan[];
+  };
 }
 
-export function Header({ live, races, selectedDate, onSelectDate, replay }: HeaderProps) {
+export function Header({ live, races, selectedDate, onSelectDate, replay, spectators }: HeaderProps) {
   const { theme, toggle } = useTheme();
 
   return (
@@ -52,6 +60,13 @@ export function Header({ live, races, selectedDate, onSelectDate, replay }: Head
             LIVE
           </div>
         )}
+
+        <BroadcastBug
+          count={spectators.count}
+          peak={spectators.peak}
+          peakAt={spectators.peakAt}
+          namedCount={spectators.fans.filter((f) => f.name).length}
+        />
 
         <DateSelector races={races} selected={selectedDate} onSelect={onSelectDate} />
         <ReplayControls {...replay} />

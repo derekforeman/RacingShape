@@ -42,6 +42,7 @@ export interface RaceToday {
   topScore: number; // for track auto-scale (>=1)
   standings: RacerStanding[]; // sorted by position
   lastPolledAt: string | null; // ISO UTC
+  viewers: ViewersSummary;
 }
 
 export interface SnapshotFrame {
@@ -54,6 +55,7 @@ export interface ArchivedReaction {
   kind: ReactionKind;
   reactor: string;
   createdAt: string; // ISO UTC
+  source: 'boost' | 'cheer';
 }
 
 export interface PodiumStep {
@@ -127,6 +129,7 @@ export interface StatsResponse {
   totalTasks: TasksStat;
   completion: CompletionStat;
   streak: StreakStat;
+  crowd: CrowdStat;
 }
 
 /** POST body for a pit-stop boost (plan 04). */
@@ -139,4 +142,60 @@ export interface CreateReactionBody {
 export interface CreateReactionResponse {
   ok: true;
   reactions: ReactionSummary; // updated count for the target
+}
+
+// ---- Spectators ----
+export interface SpectatorFan {
+  id: string;                    // per-session id; client matches against its own sessionId to find itself
+  name: string | null;          // null = anonymous
+  flag: string | null;          // emoji, e.g. "🇨🇦"
+  cheerForLogin: string | null; // racer this fan is cheering, if any
+  isSelf?: boolean;             // computed client-side (never in shared broadcasts)
+  watchingForSec: number;
+}
+
+export interface PresenceEvent {
+  type: 'presence';
+  count: number;
+  peak: number;
+  peakAt: string | null;        // ISO UTC
+  fans: SpectatorFan[];         // named first, then anonymous
+}
+
+export interface CheerEvent {
+  type: 'cheer';
+  targetLogin: string;
+  label: string;                // self-set name, or 'a fan'
+}
+
+export interface HeartbeatBody {
+  sessionId: string;
+  name?: string | null;
+  flag?: string | null;         // client override; suppresses auto geo flag
+  cheerForLogin?: string | null;
+}
+
+export interface HeartbeatResponse {
+  flag: string | null;          // server-resolved auto flag (null if disabled/unknown)
+}
+
+export interface CheerBody {
+  sessionId: string;
+  targetLogin: string;
+}
+
+export interface CheerResponse {
+  ok: boolean;
+  reason?: 'cooldown' | 'unknown_target';
+}
+
+export interface ViewersSummary {
+  count: number;
+  peak: number;
+  peakAt: string | null;
+}
+
+export interface CrowdStat {
+  peakToday: number;
+  peaks: { date: string; peak: number }[]; // chronological, for the sparkline
 }

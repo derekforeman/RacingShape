@@ -4,7 +4,8 @@ import { dirname } from 'node:path';
 import { loadConfig } from './config.js';
 import { openDb } from './db/connection.js';
 import { migrate } from './db/migrate.js';
-import { createApp } from './app.js';
+import { createApp, type SpectatorRuntime } from './app.js';
+import { createIpApiGeo } from './spectators/geo.js';
 import { makeOctokit } from './github/client.js';
 import { makeFetchBatch } from './github/fetchActivity.js';
 import { Poller } from './github/poller.js';
@@ -43,7 +44,23 @@ function main(): void {
     clearTimer: (h) => clearTimeout(h),
   });
 
-  const app = createApp({ db, config, clock: () => new Date() });
+  const geo = createIpApiGeo({ enabled: config.geoEnabled });
+
+  let spectators: SpectatorRuntime | undefined;
+  const app = createApp({
+    db,
+    config,
+    clock: () => new Date(),
+    geo,
+    onSpectators: (rt) => { spectators = rt; },
+  });
+
+  // Reaper: drop stale spectators every 15s and re-broadcast if the set changed.
+  setInterval(() => {
+    if (spectators && spectators.registry.reap()) {
+      spectators.hub.broadcast('presence', spectators.registry.snapshot());
+    }
+  }, 15_000).unref(); // don't keep the process alive on the reaper alone (app.listen does)
 
   poller.start();
   scheduler.start();

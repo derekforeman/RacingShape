@@ -10,6 +10,7 @@ const EXPECTED_TABLES = [
   'reactions',
   'http_cache',
   'poll_meta',
+  'viewer_peaks',
 ];
 
 function tableNames(db: ReturnType<typeof openDb>): string[] {

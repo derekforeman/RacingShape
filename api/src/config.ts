@@ -6,6 +6,7 @@ export interface AppConfig {
   pollIntervalMs: number; // default 60_000
   snapshotIntervalMs: number; // default 300_000 (5 min) — replay frame cadence
   dbPath: string; // default "./data/racingshape.db"
+  geoEnabled: boolean; // default false — enable IP→country lookup via ip-api.com
 }
 
 /** Parse a positive integer env var; throw a clear error naming the var on failure. */
@@ -40,5 +41,6 @@ export function loadConfig(env: NodeJS.ProcessEnv): AppConfig {
       300_000,
     ),
     dbPath: env.DB_PATH && env.DB_PATH !== '' ? env.DB_PATH : './data/racingshape.db',
+    geoEnabled: env.GEO_ENABLED === 'true',
   };
 }

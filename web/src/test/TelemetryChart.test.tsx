@@ -12,6 +12,7 @@ const stats: StatsResponse = {
   totalTasks: { total: 0, issues: 0, prs: 0, deltaVsPriorWeek: 0 },
   completion: { rate: 0, closed: 0, opened: 0 },
   streak: { current: 0, startDate: null, bestThisMonth: 0 },
+  crowd: { peakToday: 0, peaks: [] },
 };
 
 describe('TelemetryChart', () => {

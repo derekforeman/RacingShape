@@ -8,12 +8,16 @@ export function Track({
   live,
   reactor,
   displayScoreFor,
+  onCheer,
+  cheerFxFor,
 }: {
   standings: RacerStanding[];
   topScore: number;
   live?: boolean;
   reactor?: string;
   displayScoreFor?: (login: string) => number | undefined;
+  onCheer?: (login: string) => void;
+  cheerFxFor?: (login: string) => { id: number; label: string }[];
 }) {
   const ordered = [...standings].sort((a, b) => a.position - b.position);
   return (
@@ -45,6 +49,8 @@ export function Track({
             live={live}
             reactor={reactor}
             displayScore={displayScoreFor?.(r.login)}
+            onCheer={onCheer}
+            cheerFx={cheerFxFor?.(r.login)}
           />
         </div>
       ))}
