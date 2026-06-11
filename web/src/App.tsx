@@ -19,6 +19,7 @@ import { PitWall } from './components/PitWall';
 import { Recap } from './components/Recap';
 import { GrandPrixReveal } from './components/GrandPrixReveal';
 import { useReplay } from './replay/useReplay';
+import { useReplayCheerFx } from './replay/useReplayCheerFx';
 import { useSpectators } from './lib/useSpectators';
 import { exportNodeToPng } from './lib/exportPng';
 
@@ -77,6 +78,14 @@ export default function App() {
   const frames = useMemo(() => archive?.frames ?? [], [archive]);
   const replay = useReplay(frames);
 
+  // replay cheer bubbles — source:'cheer' reactions surface as transient Car cheerFx bubbles
+  const replayCheerFx = useReplayCheerFx(
+    replay.t,
+    frames,
+    archive?.reactions ?? [],
+    !isLive,
+  );
+
   // live spectator presence (SSE-based)
   const spectators = useSpectators();
 
@@ -95,8 +104,12 @@ export default function App() {
   }, [isLive, archive]);
 
   const cheerFxFor = useCallback(
-    (login: string) => spectators.cheerFx.filter((fx) => fx.targetLogin === login).map(({ id, label }) => ({ id, label })),
-    [spectators.cheerFx],
+    (login: string) => {
+      const liveFx = spectators.cheerFx.filter((fx) => fx.targetLogin === login).map(({ id, label }) => ({ id, label }));
+      const archiveFx = replayCheerFx.filter((fx) => fx.targetLogin === login).map(({ id, label }) => ({ id, label }));
+      return [...liveFx, ...archiveFx];
+    },
+    [spectators.cheerFx, replayCheerFx],
   );
 
   const onExportPng = useCallback(() => {
