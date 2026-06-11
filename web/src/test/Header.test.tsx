@@ -11,6 +11,7 @@ function props(over: Partial<HeaderProps> = {}): HeaderProps {
     selectedDate: 'today',
     onSelectDate: () => {},
     replay: { enabled: false, playing: false, speed: 1, onPlay() {}, onPause() {}, onSpeed() {} },
+    spectators: { count: 0, peak: 0, peakAt: null, fans: [] },
     ...over,
   };
 }

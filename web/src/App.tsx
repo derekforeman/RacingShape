@@ -19,6 +19,7 @@ import { PitWall } from './components/PitWall';
 import { Recap } from './components/Recap';
 import { GrandPrixReveal } from './components/GrandPrixReveal';
 import { useReplay } from './replay/useReplay';
+import { useSpectators } from './lib/useSpectators';
 import { exportNodeToPng } from './lib/exportPng';
 
 const POLL_MS = 60_000;
@@ -75,6 +76,9 @@ export default function App() {
   // replay engine over the archive frames (empty when live)
   const frames = useMemo(() => archive?.frames ?? [], [archive]);
   const replay = useReplay(frames);
+
+  // live spectator presence (SSE-based)
+  const spectators = useSpectators();
 
   // which standings + per-racer display score to render
   const standings: RacerStanding[] = isLive ? today.data?.standings ?? [] : archive?.standings ?? [];
@@ -164,6 +168,7 @@ export default function App() {
             onPause: replay.pause,
             onSpeed: replay.setSpeed,
           }}
+          spectators={spectators}
         />
 
         <div className="mt-[16px] grid grid-cols-[1fr_310px] gap-[16px] max-[940px]:grid-cols-1">
