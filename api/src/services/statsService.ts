@@ -57,6 +57,7 @@ export function getStats(db: Database.Database, range: string, now: Date, config
     totalTasks,
     completion,
     streak: computeStreak(db, today),
+    crowd: { peakToday: 0, peaks: [] },
   };
 }
 

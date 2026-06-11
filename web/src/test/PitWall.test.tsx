@@ -9,6 +9,7 @@ const stats: StatsResponse = {
   totalTasks: { total: 37, issues: 23, prs: 14, deltaVsPriorWeek: 9 },
   completion: { rate: 0.82, closed: 41, opened: 50 },
   streak: { current: 12, startDate: '2026-05-22', bestThisMonth: 12 },
+  crowd: { peakToday: 0, peaks: [] },
 };
 
 describe('PitWall', () => {

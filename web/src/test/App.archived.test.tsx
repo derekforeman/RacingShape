@@ -9,6 +9,7 @@ const TODAY: RaceToday = {
   live: true,
   topScore: 12,
   lastPolledAt: '2026-06-02T15:00:00.000Z',
+  viewers: { count: 0, peak: 0, peakAt: null },
   standings: [
     {
       login: 'devon-r', displayName: 'devon-r', avatarUrl: '', score: 12,
@@ -44,7 +45,7 @@ const ARCHIVE: RaceArchive = {
     { capturedAt: '2026-06-02T03:55:00.000Z', scores: [{ login: 'devon-r', score: 44 }, { login: 'mira-k', score: 31 }] },
   ],
   reactions: [
-    { targetLogin: 'devon-r', kind: '🔥', reactor: 'mira-k', createdAt: '2026-06-01T18:00:00.000Z' },
+    { targetLogin: 'devon-r', kind: '🔥', reactor: 'mira-k', createdAt: '2026-06-01T18:00:00.000Z', source: 'boost' },
   ],
   recap: {
     raceDate: '2026-06-01',
@@ -65,6 +66,7 @@ const STATS: StatsResponse = {
   totalTasks: { total: 0, issues: 0, prs: 0, deltaVsPriorWeek: 0 },
   completion: { rate: 0, closed: 0, opened: 0 },
   streak: { current: 0, startDate: null, bestThisMonth: 0 },
+  crowd: { peakToday: 0, peaks: [] },
 };
 
 vi.mock('../lib/api');
