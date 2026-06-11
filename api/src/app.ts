@@ -98,7 +98,10 @@ export function createApp(deps: AppDeps): Express {
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true });
   });
-  app.use('/api/race', raceRouter(db, clock));
+  app.use('/api/race', raceRouter(db, clock, () => {
+    const s = registry.snapshot();
+    return { count: s.count, peak: s.peak, peakAt: s.peakAt };
+  }));
   app.use('/api/races', racesRouter(db));
   app.use('/api/stats', statsRouter(db, config, clock));
 
