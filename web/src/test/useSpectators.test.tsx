@@ -196,6 +196,22 @@ describe('useSpectators', () => {
     expect(localStorage.getItem('racingshape-spectator-flag')).toBe('🇨🇦');
   });
 
+  it('setMyName does not fire an extra heartbeat beyond the normal cadence', async () => {
+    const { result } = renderHook(() => useSpectators());
+    await flush(); // initial heartbeat fires
+    const callsAfterMount = (postHeartbeat as ReturnType<typeof vi.fn>).mock.calls.length;
+
+    act(() => { result.current.setMyName('NewName'); });
+    await flush(); // flush any microtasks that might queue an extra beat
+
+    // Should still be the same count — no new heartbeat triggered by name change.
+    expect((postHeartbeat as ReturnType<typeof vi.fn>).mock.calls.length).toBe(callsAfterMount);
+
+    // Confirm the 20s interval still fires normally.
+    await act(async () => { await vi.advanceTimersByTimeAsync(20_000); });
+    expect((postHeartbeat as ReturnType<typeof vi.fn>).mock.calls.length).toBe(callsAfterMount + 1);
+  });
+
   it('closes the EventSource on unmount', async () => {
     const { unmount } = renderHook(() => useSpectators());
     await flush();

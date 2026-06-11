@@ -19,8 +19,10 @@ export interface UseSpectators {
 }
 
 export function useSpectators(): UseSpectators {
-  const sessionId = getSessionId();
-  const initial = getIdentity();
+  // Fix 2: capture sessionId and initial identity once per mount via useState initialiser.
+  const [sessionId] = useState(() => getSessionId());
+  const [initial] = useState(() => getIdentity());
+
   const [count, setCount] = useState(0);
   const [peak, setPeak] = useState(0);
   const [peakAt, setPeakAt] = useState<string | null>(null);
@@ -31,17 +33,28 @@ export function useSpectators(): UseSpectators {
   const myCheerFor = useRef<string | null>(null);
   const fxId = useRef(0);
 
+  // Fix 3: mirror name/flag in refs so sendHeartbeat doesn't re-create on every state change.
+  const myNameRef = useRef<string | null>(initial.name);
+  const myFlagRef = useRef<string | null>(initial.flag);
+
+  // Fix 4: track cheer-removal timer ids so they can be cancelled on unmount.
+  const cheerTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
   const sendHeartbeat = useCallback(async () => {
     try {
       const resp = await postHeartbeat({
         sessionId,
-        name: myName,
-        flag: myFlag,
+        name: myNameRef.current,
+        flag: myFlagRef.current,
         cheerForLogin: myCheerFor.current,
       });
-      if (!myFlag && resp.flag) setMyFlagState(resp.flag);
+      // Auto-adopt flag from server only if we don't have one yet.
+      if (!myFlagRef.current && resp.flag) {
+        myFlagRef.current = resp.flag;
+        setMyFlagState(resp.flag);
+      }
     } catch { /* transient; next beat retries */ }
-  }, [sessionId, myName, myFlag]);
+  }, [sessionId]); // Fix 3: dep array is [sessionId] only — name/flag read via refs.
 
   useEffect(() => {
     const es = new EventSource('/api/spectators/stream');
@@ -55,9 +68,17 @@ export function useSpectators(): UseSpectators {
       const data = JSON.parse((e as MessageEvent).data) as CheerEvent;
       const id = ++fxId.current;
       setCheerFx((prev) => [...prev, { id, targetLogin: data.targetLogin, label: data.label }]);
-      setTimeout(() => setCheerFx((prev) => prev.filter((f) => f.id !== id)), 1600);
+      // Fix 4: push timer id so we can cancel it on unmount.
+      cheerTimers.current.push(
+        setTimeout(() => setCheerFx((prev) => prev.filter((f) => f.id !== id)), 1600),
+      );
     });
-    return () => es.close();
+    // Fix 4: cancel any pending cheer-removal timers when the component unmounts.
+    return () => {
+      es.close();
+      cheerTimers.current.forEach(clearTimeout);
+      cheerTimers.current = [];
+    };
   }, [sessionId]);
 
   useEffect(() => {
@@ -66,8 +87,18 @@ export function useSpectators(): UseSpectators {
     return () => clearInterval(t);
   }, [sendHeartbeat]);
 
-  const setMyName = useCallback((n: string | null) => { persistName(n); setMyNameState(n); }, []);
-  const setMyFlag = useCallback((f: string | null) => { persistFlag(f); setMyFlagState(f); }, []);
+  // Fix 3: update both state (for rendering) and ref (for heartbeat reads).
+  const setMyName = useCallback((n: string | null) => {
+    persistName(n);
+    myNameRef.current = n;
+    setMyNameState(n);
+  }, []);
+
+  const setMyFlag = useCallback((f: string | null) => {
+    persistFlag(f);
+    myFlagRef.current = f;
+    setMyFlagState(f);
+  }, []);
 
   const cheer = useCallback((targetLogin: string) => {
     myCheerFor.current = targetLogin;

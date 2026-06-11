@@ -60,5 +60,6 @@ export async function postCheer(body: CheerBody): Promise<CheerResponse> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
+  if (!res.ok) return { ok: false };
   return res.json() as Promise<CheerResponse>;
 }

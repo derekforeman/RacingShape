@@ -66,6 +66,12 @@ describe('postCheer', () => {
     expect(res).toEqual(payload);
   });
 
+  it('returns { ok: false } without throwing when the server responds with a non-ok status', async () => {
+    (fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ ok: false, status: 429 });
+    const res = await postCheer({ sessionId: 'abc', targetLogin: 'someone' });
+    expect(res).toEqual({ ok: false });
+  });
+
   it('returns a cooldown reason when the server responds with it', async () => {
     const payload: CheerResponse = { ok: false, reason: 'cooldown' };
     (fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
