@@ -33,3 +33,6 @@ yarn-error.log*
 # Node / build (plan 01 additions)
 data/
 *.tsbuildinfo
+
+# brainstorm visual companion scratch
+.superpowers/
