@@ -2,6 +2,7 @@ import type Database from 'better-sqlite3';
 import type { StatsResponse, ChartDay, TasksStat, CompletionStat, StreakStat } from '@racingshape/shared';
 import type { AppConfig } from '../config.js';
 import { getRange } from '../db/repositories/dailyStats.js';
+import { listViewerPeaks } from '../db/repositories/viewerPeaks.js';
 import { raceDateFor } from '../time/raceDate.js';
 
 function parseRangeDays(range: string): number {
@@ -22,6 +23,12 @@ export function getStats(db: Database.Database, range: string, now: Date, config
   const days = parseRangeDays(range);
   const today = raceDateFor(now);
   const fromDate = shiftDateKey(today, -(days - 1));
+
+  // Full chronological date list for the range (all days, not just those with chart data)
+  const allDates: string[] = [];
+  for (let i = 0; i < days; i++) {
+    allDates.push(shiftDateKey(fromDate, i));
+  }
 
   const rows = getRange(db, fromDate, today); // ascending by date (plan-01 guarantee)
   const chart: ChartDay[] = rows.map((r) => ({
@@ -57,7 +64,15 @@ export function getStats(db: Database.Database, range: string, now: Date, config
     totalTasks,
     completion,
     streak: computeStreak(db, today),
-    crowd: { peakToday: 0, peaks: [] },
+    crowd: buildCrowd(db, allDates, today),
+  };
+}
+
+function buildCrowd(db: Database.Database, allDates: string[], today: string) {
+  const peakMap = listViewerPeaks(db, allDates);
+  return {
+    peakToday: peakMap.get(today) ?? 0,
+    peaks: allDates.map((date) => ({ date, peak: peakMap.get(date) ?? 0 })),
   };
 }
 
