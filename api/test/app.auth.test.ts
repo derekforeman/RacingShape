@@ -7,7 +7,7 @@ import type { AppConfig } from '../src/config.js';
 
 const config: AppConfig = {
   port: 8787, githubToken: 't', repoOwner: 'S2AI', repoName: 's2shape',
-  pollIntervalMs: 60000, snapshotIntervalMs: 300000, dbPath: ':memory:',
+  pollIntervalMs: 60000, snapshotIntervalMs: 300000, dbPath: ':memory:', geoEnabled: false,
 };
 
 const PASSWORD = 'pit-lane-42';

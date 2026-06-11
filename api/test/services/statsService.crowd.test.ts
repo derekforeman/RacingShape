@@ -7,7 +7,7 @@ import type { AppConfig } from '../../src/config.js';
 
 const config: AppConfig = {
   port: 8787, githubToken: 'x', repoOwner: 'S2AI', repoName: 's2shape',
-  pollIntervalMs: 60000, snapshotIntervalMs: 300000, dbPath: ':memory:',
+  pollIntervalMs: 60000, snapshotIntervalMs: 300000, dbPath: ':memory:', geoEnabled: false,
 };
 
 describe('getStats crowd', () => {
