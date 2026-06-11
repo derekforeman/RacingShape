@@ -199,6 +199,7 @@ export default function App() {
                 cosmeticsByLogin={cosmeticsByLogin}
                 onExportPng={onExportPng}
                 replayLink={replayLink}
+                crowdPeak={stats.data?.crowd.peaks.find((p) => p.date === archive.recap.raceDate)?.peak}
               />
             )}
           </div>

@@ -42,9 +42,10 @@ export interface RecapProps {
   cosmeticsByLogin: Record<string, Cosmetic[]>;
   onExportPng: () => void;
   replayLink: string;
+  crowdPeak?: number;
 }
 
-export function Recap({ recap, cosmeticsByLogin, onExportPng, replayLink }: RecapProps) {
+export function Recap({ recap, cosmeticsByLogin, onExportPng, replayLink, crowdPeak }: RecapProps) {
   if (!recap.podium || recap.podium.length === 0) return null;
 
   const earned = Object.entries(cosmeticsByLogin).flatMap(([login, cs]) =>
@@ -125,6 +126,19 @@ export function Recap({ recap, cosmeticsByLogin, onExportPng, replayLink }: Reca
             <div className="text-[11px] text-muted">{s.detail}</div>
           </div>
         ))}
+        {crowdPeak != null && crowdPeak > 0 && (
+          <div
+            data-testid="super-crowd-peak"
+            data-tip={tip('Biggest crowd', 'Peak concurrent viewers watching this race day.')}
+            className="cursor-help bg-panel px-[14px] py-[13px]"
+          >
+            <div className="font-head text-[10px] font-bold uppercase tracking-[1px] text-amber">
+              👥 Biggest crowd
+            </div>
+            <div className="mono mt-[4px] text-[15px] font-bold">{crowdPeak} fans</div>
+            <div className="text-[11px] text-muted">peak concurrent viewers</div>
+          </div>
+        )}
       </div>
 
       {earned.length > 0 && (
