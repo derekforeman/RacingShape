@@ -179,6 +179,11 @@ export default function App() {
               live={isLive}
               reactor={REACTOR}
               displayScoreFor={displayScoreFor}
+              fans={spectators.fans}
+              myName={spectators.myName}
+              myFlag={spectators.myFlag}
+              onName={spectators.setMyName}
+              onFlag={spectators.setMyFlag}
             />
             <div className="mt-[16px]">{stats.data && <TelemetryChart stats={stats.data} />}</div>
             {!isLive && archive && (
