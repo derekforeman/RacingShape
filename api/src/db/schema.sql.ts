@@ -57,4 +57,10 @@ CREATE TABLE IF NOT EXISTS poll_meta (
   key   TEXT PRIMARY KEY,
   value TEXT
 );
+
+CREATE TABLE IF NOT EXISTS viewer_peaks (
+  race_date  TEXT PRIMARY KEY,
+  peak_count INTEGER NOT NULL,
+  peak_at    TEXT NOT NULL
+);
 `;

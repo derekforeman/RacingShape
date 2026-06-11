@@ -10,6 +10,7 @@ import { spectatorsRouter } from './routes/spectators.js';
 import { SseHub } from './spectators/sse.js';
 import { SpectatorRegistry } from './spectators/registry.js';
 import { raceDateFor } from './time/raceDate.js';
+import { getViewerPeak, upsertViewerPeak } from './db/repositories/viewerPeaks.js';
 
 export interface SpectatorRuntime {
   registry: SpectatorRegistry;
@@ -69,14 +70,16 @@ export function createApp(deps: AppDeps): Express {
   app.set('trust proxy', true);
 
   const hub = new SseHub();
-  const inMemoryPeaks = new Map<string, { count: number; at: string }>();
   const registry = new SpectatorRegistry({
     now: () => clock().getTime(),
     isoNow: () => clock().toISOString(),
     raceDate: () => raceDateFor(clock()),
     peaks: {
-      getPeak: (d) => inMemoryPeaks.get(d) ?? null,
-      setPeak: (d, count, at) => { inMemoryPeaks.set(d, { count, at }); },
+      getPeak: (d) => {
+        const p = getViewerPeak(db, d);
+        return p ? { count: p.peakCount, at: p.peakAt } : null;
+      },
+      setPeak: (d, count, at) => upsertViewerPeak(db, d, count, at),
     },
   });
   app.use('/api/spectators', spectatorsRouter({
