@@ -1,6 +1,6 @@
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import { join } from 'node:path';
-import { timingSafeEqual } from 'node:crypto';
+import { timingSafeEqual, randomUUID } from 'node:crypto';
 import type Database from 'better-sqlite3';
 import type { AppConfig } from './config.js';
 import { raceRouter } from './routes/race.js';
@@ -11,6 +11,7 @@ import { SseHub } from './spectators/sse.js';
 import { SpectatorRegistry } from './spectators/registry.js';
 import { raceDateFor } from './time/raceDate.js';
 import { getViewerPeak, upsertViewerPeak } from './db/repositories/viewerPeaks.js';
+import { insertCheer } from './db/repositories/reactions.js';
 
 export interface SpectatorRuntime {
   registry: SpectatorRegistry;
@@ -86,7 +87,8 @@ export function createApp(deps: AppDeps): Express {
     registry,
     hub,
     geo: deps.geo ?? (async () => null),
-    insertCheer: () => {}, // replaced in Task 12
+    insertCheer: ({ targetLogin, label, raceDate, createdAt }) =>
+      insertCheer(db, { id: randomUUID(), raceDate, targetLogin, label, createdAt }),
     raceDate: () => raceDateFor(clock()),
     isoNow: () => clock().toISOString(),
     cooldownMs: 5000,

@@ -67,12 +67,14 @@ describe('reactions repository', () => {
         kind: '🔥',
         reactor: 'amy',
         createdAt: '2026-06-02T12:00:00.000Z',
+        source: 'boost',
       },
       {
         targetLogin: 'devon-r',
         kind: '🔥',
         reactor: 'amy',
         createdAt: '2026-06-02T13:00:00.000Z',
+        source: 'boost',
       },
     ]);
   });

@@ -41,7 +41,8 @@ CREATE TABLE IF NOT EXISTS reactions (
   target_racer_login TEXT NOT NULL,
   kind               TEXT NOT NULL,
   reactor            TEXT NOT NULL,
-  created_at         TEXT NOT NULL
+  created_at         TEXT NOT NULL,
+  source             TEXT NOT NULL DEFAULT 'boost'
 );
 CREATE INDEX IF NOT EXISTS idx_reactions_racedate ON reactions(race_date);
 
