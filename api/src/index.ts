@@ -5,6 +5,7 @@ import { loadConfig } from './config.js';
 import { openDb } from './db/connection.js';
 import { migrate } from './db/migrate.js';
 import { createApp, type SpectatorRuntime } from './app.js';
+import { createIpApiGeo } from './spectators/geo.js';
 import { makeOctokit } from './github/client.js';
 import { makeFetchBatch } from './github/fetchActivity.js';
 import { Poller } from './github/poller.js';
@@ -43,11 +44,14 @@ function main(): void {
     clearTimer: (h) => clearTimeout(h),
   });
 
+  const geo = createIpApiGeo({ enabled: config.geoEnabled });
+
   let spectators: SpectatorRuntime | undefined;
   const app = createApp({
     db,
     config,
     clock: () => new Date(),
+    geo,
     onSpectators: (rt) => { spectators = rt; },
   });
 
