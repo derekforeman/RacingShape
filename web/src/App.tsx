@@ -34,8 +34,14 @@ interface RevealState {
   teamBreakdown: ScoreBreakdown;
 }
 
+/** Read the selected race day from the URL — `/race/YYYY-MM-DD`, else the live day. */
+function dateFromPath(): string {
+  const m = window.location.pathname.match(/^\/race\/(\d{4}-\d{2}-\d{2})\/?$/);
+  return m ? m[1] : 'today';
+}
+
 export default function App() {
-  const [selectedDate, setSelectedDate] = useState<string>('today');
+  const [selectedDate, setSelectedDate] = useState<string>(dateFromPath);
   const [races, setRaces] = useState<RaceListItem[]>([]);
   const [archive, setArchive] = useState<RaceArchive | null>(null);
   const [seenRecap, setSeenRecap] = useState<string | null>(() => {
@@ -53,6 +59,19 @@ export default function App() {
     void getRaces()
       .then(setRaces)
       .catch(() => setRaces([]));
+  }, []);
+
+  // keep the URL in sync so the day is shareable/bookmarkable, and follow back/forward
+  useEffect(() => {
+    const path = selectedDate === 'today' ? '/' : `/race/${selectedDate}`;
+    if (window.location.pathname !== path) {
+      window.history.pushState(null, '', path);
+    }
+  }, [selectedDate]);
+  useEffect(() => {
+    const onPop = () => setSelectedDate(dateFromPath());
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
   }, []);
 
   // live polling (always running; we just ignore its output off the live day)
