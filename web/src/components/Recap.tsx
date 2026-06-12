@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { Recap as RecapType, PodiumStep, Superlative, Cosmetic } from '../lib/types';
 import { breakdownBody } from '../lib/format';
 import { tip } from '../lib/tooltip';
@@ -46,7 +47,15 @@ export interface RecapProps {
 }
 
 export function Recap({ recap, cosmeticsByLogin, onExportPng, replayLink, crowdPeak }: RecapProps) {
+  const [copied, setCopied] = useState(false);
+
   if (!recap.podium || recap.podium.length === 0) return null;
+
+  const copyReplayLink = () => {
+    void navigator.clipboard?.writeText(replayLink);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1600);
+  };
 
   const earned = Object.entries(cosmeticsByLogin).flatMap(([login, cs]) =>
     cs.map((c) => ({ login, c })),
@@ -81,11 +90,14 @@ export function Recap({ recap, cosmeticsByLogin, onExportPng, replayLink, crowdP
           <button
             type="button"
             data-testid="copy-replay-link"
-            onClick={() => void navigator.clipboard?.writeText(replayLink)}
+            onClick={copyReplayLink}
+            aria-live="polite"
             data-tip={tip('Replay link', "Copy a link to this day's ~15s replay.")}
-            className="rounded-[7px] border border-line bg-panel2 px-[10px] py-[6px] font-head text-[12px] font-semibold tracking-[1px] text-ink transition-[.18s] hover:border-cyan"
+            className={`rounded-[7px] border bg-panel2 px-[10px] py-[6px] font-head text-[12px] font-semibold tracking-[1px] transition-[.18s] hover:border-cyan active:scale-[.97] ${
+              copied ? 'border-cyan text-cyan' : 'border-line text-ink'
+            }`}
           >
-            🔗 REPLAY LINK
+            {copied ? '✅ COPIED' : '🔗 REPLAY LINK'}
           </button>
         </div>
       </div>
@@ -130,7 +142,7 @@ export function Recap({ recap, cosmeticsByLogin, onExportPng, replayLink, crowdP
           <div
             data-testid="super-crowd-peak"
             data-tip={tip('Biggest crowd', 'Peak concurrent viewers watching this race day.')}
-            className="cursor-help bg-panel px-[14px] py-[13px]"
+            className="col-span-3 cursor-help bg-panel px-[14px] py-[13px]"
           >
             <div className="font-head text-[10px] font-bold uppercase tracking-[1px] text-amber">
               👥 Biggest crowd
