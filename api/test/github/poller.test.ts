@@ -93,6 +93,63 @@ describe('Poller.pollOnce', () => {
     expect(n.n).toBe(0);
   });
 
+  // Regression: GitHub's transient 503 ("Unicorn!" page) killed the process on 2026-07-16.
+  // pollOnce must NOT rethrow — a non-rate-limit fetch error is transient, so back off and
+  // report it, never propagate (an unhandled rejection in the tick loop crashes the API).
+  it('backs off on a transient 503 instead of throwing', async () => {
+    const seen: unknown[] = [];
+    const fail = deps({
+      fetchBatch: async () => {
+        const e: any = new Error('GitHub is unavailable (Unicorn)');
+        e.status = 503;
+        throw e;
+      },
+      onError: (err) => seen.push(err),
+    });
+    const p = new Poller(fail.d);
+    await expect(p.pollOnce()).resolves.toBeUndefined(); // resolves, does not reject
+    expect(p.currentBackoffMs).toBe(60_000);
+    expect(seen).toHaveLength(1);
+  });
+
+  it('backs off on a network error (no status) instead of throwing', async () => {
+    const fail = deps({
+      fetchBatch: async () => {
+        throw new Error('ECONNRESET');
+      },
+    });
+    const p = new Poller(fail.d);
+    await expect(p.pollOnce()).resolves.toBeUndefined();
+    expect(p.currentBackoffMs).toBe(60_000);
+  });
+
+  // Belt-and-suspenders: even a post-fetch failure (e.g. DB write) must not escape the tick
+  // loop as an unhandled rejection. The loop must swallow it, report it, and re-arm.
+  it('tick swallows a poll failure, reports it, and re-arms the timer', async () => {
+    const scheduled: Array<() => void> = [];
+    const seen: unknown[] = [];
+    const fail = deps({
+      fetchBatch: async () => {
+        const e: any = new Error('boom');
+        e.status = 500;
+        throw e;
+      },
+      setTimer: (fn) => {
+        scheduled.push(fn);
+        return 0 as unknown as ReturnType<typeof setTimeout>;
+      },
+      onError: (err) => seen.push(err),
+    });
+    const p = new Poller(fail.d);
+    p.start(); // schedules the first tick at delay 0
+    expect(scheduled).toHaveLength(1);
+    await expect((async () => scheduled[0]())()).resolves.not.toThrow();
+    // give the async tick a turn to run pollOnce and re-arm
+    await new Promise((r) => setTimeout(r, 0));
+    expect(seen).toHaveLength(1); // failure reported, not swallowed silently
+    expect(scheduled).toHaveLength(2); // loop kept alive: next tick armed
+  });
+
   it('resets backoff after a successful poll', async () => {
     let shouldFail = true;
     const flaky = deps({

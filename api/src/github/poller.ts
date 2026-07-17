@@ -18,6 +18,12 @@ export interface PollerDeps {
   fetchBatch: (raceDate: string) => Promise<RawActivityBatch>;
   setTimer: (fn: () => void, ms: number) => ReturnType<typeof setTimeout>;
   clearTimer: (handle: ReturnType<typeof setTimeout>) => void;
+  /**
+   * Optional sink for poll failures (transient GitHub errors, network blips, or an
+   * unexpected post-fetch error). Injected so the process can log/observe them; the
+   * poller itself stays pure and, critically, never throws out of its loop.
+   */
+  onError?: (err: unknown, info: { rateLimited: boolean; backoffMs: number }) => void;
 }
 
 const MAX_BACKOFF_MS = 900_000; // 15 minutes
@@ -44,7 +50,15 @@ export class Poller {
     this.stopped = false;
     const tick = async () => {
       if (this.stopped) return;
-      await this.pollOnce();
+      try {
+        await this.pollOnce();
+      } catch (err) {
+        // Last-resort guard. pollOnce is written not to throw, but a poll must NEVER be
+        // able to reject this bare-callback tick — an unhandled rejection under Node ≥15
+        // exits the process (this is exactly what killed the machine on a GitHub 503).
+        // Swallow, report, and let the loop re-arm below so the poller keeps running.
+        this.deps.onError?.(err, { rateLimited: false, backoffMs: this.currentBackoffMs });
+      }
       if (this.stopped) return;
       const delay = this.currentBackoffMs > 0 ? this.currentBackoffMs : this.deps.pollIntervalMs;
       this.handle = this.deps.setTimer(tick, delay);
@@ -69,14 +83,16 @@ export class Poller {
     try {
       batch = await fetchBatch(raceDate);
     } catch (err) {
-      if (isRateLimited(err)) {
-        this.currentBackoffMs =
-          this.currentBackoffMs === 0
-            ? pollIntervalMs
-            : Math.min(this.currentBackoffMs * 2, MAX_BACKOFF_MS);
-        return;
-      }
-      throw err;
+      // Every fetch failure is transient as far as the loop is concerned: rate limits
+      // (403/429), GitHub 5xx (the "Unicorn!" 503 that crashed us), and network blips all
+      // get the same exponential backoff. We never rethrow — a throw here would reject the
+      // async tick and take down the whole API + reset scheduler.
+      this.currentBackoffMs =
+        this.currentBackoffMs === 0
+          ? pollIntervalMs
+          : Math.min(this.currentBackoffMs * 2, MAX_BACKOFF_MS);
+      this.deps.onError?.(err, { rateLimited: isRateLimited(err), backoffMs: this.currentBackoffMs });
+      return;
     }
 
     // success: reset backoff

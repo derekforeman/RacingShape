@@ -33,6 +33,14 @@ function main(): void {
     fetchBatch,
     setTimer: (fn, ms) => setTimeout(fn, ms),
     clearTimer: (h) => clearTimeout(h),
+    onError: (err, info) => {
+      const status = (err as { status?: number }).status ?? '?';
+      const label = info.rateLimited ? 'rate limited' : 'transient error';
+      const backoffS = Math.round(info.backoffMs / 1000);
+      // Report the message only — never the error object, which carries the auth header.
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`[poller] ${label} (status ${status}); backing off ${backoffS}s: ${msg}`);
+    },
   });
 
   const scheduler = new ResetScheduler({
