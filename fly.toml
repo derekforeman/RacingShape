@@ -29,6 +29,21 @@ primary_region = "iad"   # us-east, closest to the America/New_York race-day clo
     soft_limit = 150
     hard_limit = 200
 
+  # Backstop: if the process wedges or dies, Fly sees the check fail and restarts the
+  # machine instead of leaving it dark. /api/health is auth-exempt (see app.ts).
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "15s"
+    method = "GET"
+    path = "/api/health"
+
+# Auto-restart a crashed machine. The default policy gives up after a burst of quick
+# crashes (which is how a poll-loop crash left the app permanently stopped). "always"
+# keeps bringing it back; the code fix in the poller is the real cure, this is the net.
+[[restart]]
+  policy = "always"
+
 # SQLite persistence. The volume name must match `fly volumes create` (see DEPLOY.md).
 # A volume binds to a single machine — keep the app at exactly one machine.
 [[mounts]]
